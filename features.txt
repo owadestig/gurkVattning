@@ -1,0 +1,24 @@
+Features:
+
+HW relaterat
+1.  Ta in input från bollknapp
+2.  Output på GPI/O pinsen
+
+
+Sova 4? timmar, vakna, pinga servern efter hur många sekunder det är till nästa bevattning
+    
+3.  
+4.  
+5.  
+6.  
+7.  
+8.  
+9.  
+10. 
+
+
+LÄNKAR
+https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
+
+https://www.instructables.com/ESP8266-Pro-Tips/
+
