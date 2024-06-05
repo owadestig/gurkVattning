@@ -2,6 +2,7 @@
 #define WIFIMANAGER_H
 
 #include <ESP8266WiFi.h>
+#include "Utils.h"
 
 void standbyMode(unsigned long standbyDuration, unsigned long reconnectTimeout);
 void reconnectWiFi();

@@ -13,5 +13,6 @@ void go_to_sleep(int sleepTime)
     delay(1);
 
     // WAKE_RF_DISABLED to keep the WiFi radio disabled when we wake up
-    ESP.deepSleep(sleepTime, WAKE_RF_DISABLED);
+    ESP.deepSleep(sleepTime * 1000, WAKE_RF_DISABLED);
+    ESP.reset(); // Reset and try again
 }

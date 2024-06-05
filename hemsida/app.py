@@ -8,29 +8,51 @@ app = Flask(__name__)
 time_interval = timedelta(minutes=1)
 next_timer_activation = datetime.now() + time_interval
 
-# Set the initial LED duration
-led_duration = 8
+# Set watering_time
+watering_time = 8
+
+# Constants
+constants = {
+    "pinLED": 5,
+    "pinInput": 14,
+    "waitThreshold": 1000
+    * 60
+    * 240,  # Hur länge den ska sova om tid kvar är mer än detta, #! 4 timmar
+    "maxOnDuration": 10000,  # tills den ska sluta snurra om knappen är trasig #! 10 sekunder
+    "reconnectInterval": 5000,  # hur ofta jag söker efter nät ifall den inte hittar, intervall #! 5 sekunder
+    "reconnectTimeout": 60000,  # efter hur mycket tid den ska sluta leta efter nät o somna #! 1 minute
+    "standbyDuration": 7200000,  # Om det inte gick att ansluta till internet #! 2 timmar
+}
+
+
+# Endpoint to provide constants
+@app.route("/constants", methods=["GET"])
+def get_constants():
+    return jsonify(constants)
 
 
 # Endpoint that returns the time until the next timer activation and the LED duration
 @app.route("/data", methods=["GET"])
 def get_data():
-    global next_timer_activation, led_duration, time_interval
+    global next_timer_activation, watering_time, time_interval
     now = datetime.now()
     remaining_time = (next_timer_activation - now).total_seconds()
 
     if remaining_time <= 0:
         # Timer has activated, set the next activation time and generate a new LED duration
         next_timer_activation += time_interval
-        # led_duration = random.randint(5, 13)
-        led_duration = 8
-        print(f"New LED duration: {led_duration} seconds")
+        # watering_time = random.randint(5, 13)
+        watering_time = 8
+        print(f"New LED duration: {watering_time} seconds")
+        return jsonify(
+            value=int(remaining_time + timedelta(minutes=1).total_seconds()),
+            watering_time=watering_time,
+            current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
+        )
 
     return jsonify(
-        value=int(
-            remaining_time if remaining_time > 0 else time_interval.total_seconds()
-        ),
-        led_duration=led_duration,
+        value=int(remaining_time),
+        watering_time=watering_time,
         time_interval=int(time_interval.total_seconds()),
         current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
     )

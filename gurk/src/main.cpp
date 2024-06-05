@@ -15,13 +15,63 @@ const char *password = "7A62B947C2";
 const char *serverUrl = "http://192.168.0.108:5001/data";
 const char *noButtonSignalUrl = "http://192.168.0.108:5001/no_button_signal";
 const char *logLightStatusUrl = "http://192.168.0.108:5001/log_light_status";
-const int pinLED = 4;                          // Pin for output to light
-const int pinInput = 12;                       // Pin for input signal
-const int waitThreshold = 10000;               // Threshold for waiting or sleeping (in milliseconds)
-const unsigned long maxOnDuration = 10000;     // Maximum duration for LED to stay on (in milliseconds)
-const unsigned long reconnectInterval = 5000;  // Interval for attempting to reconnect (in milliseconds)
-const unsigned long reconnectTimeout = 60000;  // Maximum time to attempt reconnection (in milliseconds)
-const unsigned long standbyDuration = 7200000; // Duration for standby mode (in milliseconds, 2 hours)
+const char *constantsUrl = "http://192.168.0.108:5001/constants";
+
+// Define variables to hold the constants fetched from the server
+int pinLED;
+int pinInput;
+int waitThreshold;
+unsigned long maxOnDuration;
+unsigned long reconnectInterval;
+unsigned long reconnectTimeout;
+unsigned long standbyDuration;
+
+void fetchConstants()
+{
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    WiFiClient client;
+    HTTPClient http;
+    http.begin(client, constantsUrl);
+    int httpCode = http.GET();
+
+    if (httpCode > 0)
+    {
+      String payload = http.getString();
+      Serial.println(httpCode);
+      Serial.println(payload);
+
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (error)
+      {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.f_str());
+        return;
+      }
+
+      pinLED = doc["pinLED"];
+      pinInput = doc["pinInput"];
+      waitThreshold = doc["waitThreshold"];
+      maxOnDuration = doc["maxOnDuration"];
+      reconnectInterval = doc["reconnectInterval"];
+      reconnectTimeout = doc["reconnectTimeout"];
+      standbyDuration = doc["standbyDuration"];
+    }
+    else
+    {
+      Serial.print("Error on HTTP request: ");
+      Serial.println(http.errorToString(httpCode).c_str());
+    }
+    http.end();
+  }
+  else
+  {
+    Serial.println("WiFi Disconnected");
+    reconnectWiFi();
+  }
+}
 
 void setup()
 {
@@ -33,15 +83,17 @@ void setup()
   delay(1);
   // Disable the WiFi persistence.  The ESP8266 will not load and save WiFi settings in the flash memory.
   WiFi.persistent(false);
-  WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   connectToWiFi(ssid, password);
+
+  fetchConstants(); // Fetch constants from the server
 
   pinMode(pinLED, OUTPUT);
   pinMode(pinInput, INPUT_PULLUP); // Enable internal pull-up resistor
   Serial.begin(115200);
   delay(10);
   Serial.println("SDK version: " + String(ESP.getSdkVersion()));
+  resetLED();
 }
 
 void loop()

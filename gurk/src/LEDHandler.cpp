@@ -1,7 +1,7 @@
 #include "LEDHandler.h"
 
-extern const int pinLED;
-extern const int pinInput;
+extern int pinLED;
+extern int pinInput;
 extern const char *logLightStatusUrl;
 
 void logLightStatus(const char *status)
@@ -24,7 +24,6 @@ void logLightStatus(const char *status)
         if (httpCode > 0)
         {
             String response = http.getString();
-            Serial.println(httpCode);
             Serial.println(response);
         }
         else
@@ -36,63 +35,36 @@ void logLightStatus(const char *status)
     }
     else
     {
-        Serial.println("WiFi Disconnected");
+        Serial.println("WiFi Disconnected during logging");
     }
 }
 
-void handleLED(int value, unsigned long ledGap, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState)
+void handleLED(int value, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState)
 {
-    // Debounce parameters
-    unsigned long debounceDelay = 50;   // Debounce delay in milliseconds
-    int lastButtonState = LOW;          // Previous button state
-    int buttonState = LOW;              // Current button state
-    unsigned long lastDebounceTime = 0; // Last time the button state was toggled
-
     while (value > 0)
     {
-        int interval = 500;
+        int interval = 1000;
         value -= interval;
         delay(interval);
     }
-
-    Serial.printf("Turning LED on, waiting for HIGH signal on pin %d or %d seconds\n", pinInput, maxOnDuration / 1000);
+    Serial.printf("LED ON");
     digitalWrite(pinLED, HIGH);
     logLightStatus("on");
     disconnectFromWiFi();
     unsigned long startTime = millis();
     bool ButtonSignal = false;
-
     while (millis() - startTime < maxOnDuration)
     {
-        int reading = digitalRead(pinInput);
-
-        if (reading != lastButtonState)
+        if (digitalRead(pinInput) == waitState)
         {
-            lastDebounceTime = millis(); // Reset the debouncing timer
+            ButtonSignal = true;
+            break;
         }
-
-        if ((millis() - lastDebounceTime) > debounceDelay)
-        {
-            if (reading != buttonState)
-            {
-                buttonState = reading;
-
-                if (buttonState == waitState)
-                {
-                    ButtonSignal = true;
-                    break;
-                }
-            }
-        }
-
-        lastButtonState = reading;
         delay(10); // Small delay to prevent high CPU usage
     }
-
     digitalWrite(pinLED, LOW); // Turn off the LED
     connectToWiFi(ssid, password);
     logLightStatus("off");
-
     if (!ButtonSignal)
     {
         sendRequestToServer(noButtonSignalUrl);
@@ -111,32 +83,30 @@ void processResponse(const String &payload)
         return;
     }
 
-    int value = doc["value"];
-    int temp_val = doc["led_duration"]; // Access the value as an integer
-    int time_interval = doc["time_interval"];
-    unsigned long ledGap = temp_val * 1000; // Multiply the retrieved value by 1000
+    int value = doc["value"];                 // seconds until turn on time
+    int temp_val = doc["led_duration"];       // Access the value as an integer
+    int time_interval = doc["time_interval"]; //
+    unsigned long ledGap = temp_val * 1000;   // Multiply the retrieved value by 1000
     String current_time = doc["current_time"];
 
-    Serial.print("Value after JSON parsing = ");
-    Serial.println(value);
-    Serial.print("LED On Duration = ");
-    Serial.println(ledGap);
-    Serial.print("Time Interval = ");
-    Serial.println(time_interval);
-    Serial.print("Current Time = ");
-    Serial.println(current_time);
-
-    if (value < waitThreshold)
+    if (value * 1000 < waitThreshold + 15000)
     {
-        handleLED(value, ledGap, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        handleLED(value, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
         delay(ledGap);
-        handleLED(value, ledGap, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        handleLED(value, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        return;
     }
     else
     {
-        Serial.printf("Sleeping for %d seconds\n", waitThreshold);
-        disconnectFromWiFi();
-        delay(waitThreshold); // Sleep for the threshold time
-        connectToWiFi(ssid, password);
+        go_to_sleep(waitThreshold * 1000);
+        return;
+    }
+}
+
+void resetLED()
+{
+    if (digitalRead(pinInput) == HIGH)
+    {
+        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
     }
 }

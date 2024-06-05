@@ -7,7 +7,7 @@ const unsigned long standbyDuration = 7200000; // Duration for standby mode (in 
 void standbyMode(unsigned long standbyDuration, unsigned long reconnectTimeout)
 {
 
-    delay(standbyDuration);    // Wait for the standby duration
+    delay(standbyDuration); // Wait for the standby duration
 
     // Attempt to reconnect after standby duration
     Serial.println("Attempting to reconnect after standby...");
@@ -58,8 +58,7 @@ void connectToWiFi(const char *ssid, const char *password)
         if (millis() - startTime > reconnectTimeout)
         {
             Serial.println("\nFailed to connect to WiFi within the timeout period. Entering standby mode.");
-            standbyMode(standbyDuration, reconnectTimeout);
-            startTime = millis();
+            go_to_sleep(standbyDuration);
         }
     }
 
@@ -68,6 +67,8 @@ void connectToWiFi(const char *ssid, const char *password)
     Serial.println(WiFi.localIP());
 }
 
-void disconnectFromWiFi(){
+void disconnectFromWiFi()
+{
+    Serial.println("Disconnecting WiFi");
     WiFi.mode(WIFI_OFF);
 }
