@@ -59,3 +59,13 @@ void sendRequestToServer(const char *url)
         reconnectWiFi();
     }
 }
+
+int check_if_server_is_up(const char *url)
+{
+    if (!Ping.ping(url))
+    {
+        Serial.println("Server is down, doing basic script...");
+        return 0;
+    }
+    return 1;
+}

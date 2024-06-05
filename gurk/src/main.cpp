@@ -92,8 +92,11 @@ void setup()
   pinMode(pinInput, INPUT_PULLUP); // Enable internal pull-up resistor
   Serial.begin(115200);
   delay(10);
-  Serial.println("SDK version: " + String(ESP.getSdkVersion()));
   resetLED();
+  if (!check_if_server_is_up(serverUrl))
+  {
+    offlineMode();
+  }
 }
 
 void loop()

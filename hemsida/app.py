@@ -9,7 +9,7 @@ time_interval = timedelta(minutes=1)
 next_timer_activation = datetime.now() + time_interval
 
 # Set watering_time
-watering_time = 8
+watering_time = 1000 * 60 * 5  # 3 minuter
 
 # Constants
 constants = {
@@ -39,21 +39,19 @@ def get_data():
     remaining_time = (next_timer_activation - now).total_seconds()
 
     if remaining_time <= 0:
-        # Timer has activated, set the next activation time and generate a new LED duration
         next_timer_activation += time_interval
-        # watering_time = random.randint(5, 13)
-        watering_time = 8
         print(f"New LED duration: {watering_time} seconds")
         return jsonify(
-            value=int(remaining_time + timedelta(minutes=1).total_seconds()),
+            time_until_watering=int(
+                remaining_time + timedelta(minutes=1).total_seconds()
+            ),
             watering_time=watering_time,
             current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     return jsonify(
-        value=int(remaining_time),
+        time_until_watering=int(remaining_time),
         watering_time=watering_time,
-        time_interval=int(time_interval.total_seconds()),
         current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
     )
 
