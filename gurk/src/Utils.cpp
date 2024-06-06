@@ -1,10 +1,8 @@
 #include "Utils.h"
-#include "WifiManager.h"
 
 void shutdown(String message)
 {
     Serial.println(message);
-    // TODO: IMPLEMENT TURN OFF CODE HERE
 }
 
 void go_to_sleep(int sleepTime)

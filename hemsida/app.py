@@ -5,11 +5,11 @@ import random
 app = Flask(__name__)
 
 # Set the initial timer activation time (e.g., at the start of the next minute)
-time_interval = timedelta(minutes=1)
+time_interval = timedelta(hours=12)
 next_timer_activation = datetime.now() + time_interval
 
 # Set watering_time
-watering_time = 1000 * 5  # 3 minuter
+watering_time = 1000 * 60 * 3  # 3 minuter
 
 # Constants
 constants = {
@@ -55,14 +55,7 @@ def get_data():
     print("Time until watering = ", remaining_time)
     if remaining_time <= 0:
         next_timer_activation += time_interval
-        print(f"New LED duration: {watering_time} seconds")
-        return jsonify(
-            time_until_watering=int(
-                remaining_time + timedelta(minutes=1).total_seconds()
-            ),
-            watering_time=watering_time,
-            current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
-        )
+        print(f"New LED duration: {watering_time} ms")
 
     return jsonify(
         time_until_watering=int(remaining_time),

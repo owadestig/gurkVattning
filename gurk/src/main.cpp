@@ -10,15 +10,15 @@
 
 const char *ssid = "Eagle_389AD0";
 const char *password = "CiKbPq6b";
-const char *serverUrl = "http://192.168.38.169:5001/data";
-const char *noButtonSignalUrl = "http://192.168.38.169:5001/no_button_signal";
-const char *logLightStatusUrl = "http://192.168.38.169:5001/log_light_status";
-const char *constantsUrl = "http://192.168.38.169:5001/constants";
+const char *serverUrl = "https://owadestig.github.io/gurkVattning/data";
+const char *noButtonSignalUrl = "https://owadestig.github.io/gurkVattning/no_button_signal";
+const char *logLightStatusUrl = "https://owadestig.github.io/gurkVattning/log_light_status";
+const char *constantsUrl = "https://owadestig.github.io/gurkVattning/constants";
 
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
 const int pinInput = 14;
-const int waitThreshold = 8000;
+const int waitThreshold = 1000 * 60 * 240;
 const unsigned long maxOnDuration = 10000;
 const unsigned long reconnectInterval = 5000;
 const unsigned long reconnectTimeout = 60000;

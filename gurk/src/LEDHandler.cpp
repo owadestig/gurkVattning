@@ -24,6 +24,7 @@ void logLightStatus(const char *status)
         if (httpCode > 0)
         {
             String response = http.getString();
+            Serial.println(httpCode);
             Serial.println(response);
         }
         else
@@ -35,39 +36,40 @@ void logLightStatus(const char *status)
     }
     else
     {
-        Serial.println("WiFi Disconnected during logging");
+        Serial.println("WiFi Disconnected");
     }
 }
 
 void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState)
 {
-    disconnectFromWiFi();
-    while (time_until_watering > 0)
-    {
-        Serial.printf("time_until water, %d\n", time_until_watering);
-        int interval = 1000;
-        time_until_watering -= interval;
-        delay(interval);
-    }
-    Serial.printf("LED ON\n");
+    // Turn on the LED
     digitalWrite(pinLED, HIGH);
-    connectToWiFi(ssid, password);
     logLightStatus("on");
     disconnectFromWiFi();
     unsigned long startTime = millis();
     bool ButtonSignal = false;
+
     while (millis() - startTime < maxOnDuration)
     {
-        if (digitalRead(pinInput) == waitState)
+        // Read the button state directly without debouncing
+        int buttonState = digitalRead(pinInput);
+
+        // Check if the button state matches the wait state
+        if (buttonState == waitState)
         {
-            // ButtonSignal = true;
-            //  break;
+            ButtonSignal = true;
+            break;
         }
+
         delay(10); // Small delay to prevent high CPU usage
     }
-    digitalWrite(pinLED, LOW); // Turn off the LED
+
+    // Turn off the LED
+    digitalWrite(pinLED, LOW);
     connectToWiFi(ssid, password);
     logLightStatus("off");
+
+    // If no button signal received, perform shutdown
     if (!ButtonSignal)
     {
         sendRequestToServer(noButtonSignalUrl);
@@ -86,67 +88,56 @@ void processResponse(const String &payload)
         return;
     }
 
-    int time_until_watering = 1000 * int(doc["time_until_watering"]); // seconds until turn on time, turned into milliseconds
-    unsigned long watering_time = doc["watering_time"];
+    int time_until_watering = 1000 * int(doc["time_until_watering"]);
+    unsigned long watering_time = doc["watering_time"]; // Access the value as an integer
     String current_time = doc["current_time"];
+
+    Serial.print("time_until_watering after JSON parsing = ");
+    Serial.println(time_until_watering);
+    Serial.print("LED On Duration = ");
+    Serial.println(watering_time);
+    Serial.print("Current Time = ");
+    Serial.println(current_time);
 
     if (time_until_watering < waitThreshold + 15000)
     {
-        if (time_until_watering < 20000)
+        if (time_until_watering > 0)
         {
-            handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
-            delay(watering_time);
-            handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
-            return;
+            disconnectFromWiFi();
+            Serial.printf("Sleeping for %d ms before doing a cycle\n", time_until_watering);
+            delay(time_until_watering);
+            connectToWiFi(ssid, password);
         }
-        else
-        {
-            Serial.printf("Sleeping for %d ms", time_until_watering);
-            go_to_sleep(time_until_watering - 15 * 1000);
-        }
+
+        handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        delay(watering_time);
+        handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
     }
     else
     {
-        go_to_sleep(waitThreshold);
-        return;
+        disconnectFromWiFi();
+        Serial.printf("Sleeping for %d ms\n", waitThreshold);
+        delay(waitThreshold); // Sleep for the threshold time
+        connectToWiFi(ssid, password);
     }
 }
 
 void resetLED()
 {
+    digitalWrite(pinLED, HIGH);
+    delay(5000);
+    digitalWrite(pinLED, LOW);
     if (digitalRead(pinInput) == HIGH)
     {
-        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
     }
-}
-// Waters 2 minutes twice a day if offline
-void offlineMode()
-{
-    int watering_time = 1000 * 60 * 2; // 2 minutes, default
-    handleLEDDisconnected(HIGH);
-    delay(watering_time);
-    handleLEDDisconnected(LOW);
-    int sleep_time = 1000 * 60 * 60 * 12; // 12 hours
-    go_to_sleep(sleep_time);
-}
 
-void handleLEDDisconnected(int waitState)
-{
-    digitalWrite(pinLED, HIGH);
-    unsigned long startTime = millis();
-    bool ButtonSignal = false;
-    while (millis() - startTime < maxOnDuration)
+    if (digitalRead(pinInput) == LOW)
     {
-        if (digitalRead(pinInput) == waitState)
+        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        if (digitalRead(pinInput) == HIGH)
         {
-            ButtonSignal = true;
-            break;
+            handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
         }
-        delay(10); // Small delay to prevent high CPU usage
-    }
-    digitalWrite(pinLED, LOW); // Turn off the LED
-    if (!ButtonSignal)
-    {
-        shutdown("No button signal received when DC'd, shutting down");
     }
 }
