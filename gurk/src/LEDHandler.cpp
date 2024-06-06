@@ -1,7 +1,7 @@
 #include "LEDHandler.h"
 
-extern int pinLED;
-extern int pinInput;
+extern const int pinLED;
+extern const int pinInput;
 extern const char *logLightStatusUrl;
 
 void logLightStatus(const char *status)
@@ -44,11 +44,12 @@ void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonS
     disconnectFromWiFi();
     while (time_until_watering > 0)
     {
+        Serial.printf("time_until water, %d\n", time_until_watering);
         int interval = 1000;
         time_until_watering -= interval;
         delay(interval);
     }
-    Serial.printf("LED ON");
+    Serial.printf("LED ON\n");
     digitalWrite(pinLED, HIGH);
     connectToWiFi(ssid, password);
     logLightStatus("on");
@@ -59,8 +60,8 @@ void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonS
     {
         if (digitalRead(pinInput) == waitState)
         {
-            ButtonSignal = true;
-            break;
+            // ButtonSignal = true;
+            //  break;
         }
         delay(10); // Small delay to prevent high CPU usage
     }
@@ -86,12 +87,12 @@ void processResponse(const String &payload)
     }
 
     int time_until_watering = 1000 * int(doc["time_until_watering"]); // seconds until turn on time, turned into milliseconds
-    unsigned long watering_time = doc["led_duration"];
+    unsigned long watering_time = doc["watering_time"];
     String current_time = doc["current_time"];
 
-    if (time_until_watering * 1000 < waitThreshold + 15000)
+    if (time_until_watering < waitThreshold + 15000)
     {
-        if (time_until_watering * 10000 < 20000)
+        if (time_until_watering < 20000)
         {
             handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
             delay(watering_time);
@@ -100,7 +101,8 @@ void processResponse(const String &payload)
         }
         else
         {
-            go_to_sleep(time_until_watering - 20 * 1000);
+            Serial.printf("Sleeping for %d ms", time_until_watering);
+            go_to_sleep(time_until_watering - 15 * 1000);
         }
     }
     else
@@ -117,15 +119,14 @@ void resetLED()
         handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
     }
 }
-
+// Waters 2 minutes twice a day if offline
 void offlineMode()
 {
-    disconnectFromWiFi();
-    int watering_time = 1000 * 60 * 5; // 5 minutes, default
+    int watering_time = 1000 * 60 * 2; // 2 minutes, default
     handleLEDDisconnected(HIGH);
     delay(watering_time);
     handleLEDDisconnected(LOW);
-    int sleep_time = 1000 * 60 * 60 * 24; // 1 day
+    int sleep_time = 1000 * 60 * 60 * 12; // 12 hours
     go_to_sleep(sleep_time);
 }
 

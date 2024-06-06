@@ -9,9 +9,23 @@ time_interval = timedelta(minutes=1)
 next_timer_activation = datetime.now() + time_interval
 
 # Set watering_time
-watering_time = 1000 * 60 * 5  # 3 minuter
+watering_time = 1000 * 5  # 3 minuter
 
 # Constants
+constants = {
+    "pinLED": 5,
+    "pinInput": 14,
+    "waitThreshold": 8000,  # Hur länge den ska sova om tid kvar är mer än detta, #! 4 timmar
+    "maxOnDuration": 10000,  # tills den ska sluta snurra om knappen är trasig #! 10 sekunder
+    "reconnectInterval": 5000,  # hur ofta jag söker efter nät ifall den inte hittar, intervall #! 5 sekunder
+    "reconnectTimeout": 60000,  # efter hur mycket tid den ska sluta leta efter nät o somna #! 1 minute
+    "standbyDuration": 7200000,  # Om det inte gick att ansluta till internet #! 2 timmar
+}
+
+"""
+DEFAULT
+# Set watering_time
+watering_time = 1000 * 60 * 5  # 3 minuter
 constants = {
     "pinLED": 5,
     "pinInput": 14,
@@ -23,6 +37,7 @@ constants = {
     "reconnectTimeout": 60000,  # efter hur mycket tid den ska sluta leta efter nät o somna #! 1 minute
     "standbyDuration": 7200000,  # Om det inte gick att ansluta till internet #! 2 timmar
 }
+"""
 
 
 # Endpoint to provide constants
@@ -37,7 +52,7 @@ def get_data():
     global next_timer_activation, watering_time, time_interval
     now = datetime.now()
     remaining_time = (next_timer_activation - now).total_seconds()
-
+    print("Time until watering = ", remaining_time)
     if remaining_time <= 0:
         next_timer_activation += time_interval
         print(f"New LED duration: {watering_time} seconds")
