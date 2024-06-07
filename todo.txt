@@ -1,0 +1,10 @@
+TODO:
+
+-	fixa sleepmode
+-	rena upp kod
+-	fixa renare felhantering
+-	skapa grundläge
+-	kommentera
+-	clean up variable namn så de är konskevent
+-	ändra så att alla endpoint URLer är typ ssid + /NÅGONENDPOINT istället
+	för exakta address så ifall serverns adress ändras så äre launa 
