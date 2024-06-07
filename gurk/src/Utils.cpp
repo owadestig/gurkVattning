@@ -9,10 +9,9 @@ void go_to_sleep(int sleepTime)
 {
     Serial.printf("sleeptime in here is = %d\n", sleepTime);
     WiFi.disconnect(true);
-    delay(1);
+    delay(sleepTime);
 
     // WAKE_RF_DISABLED to keep the WiFi radio disabled when we wake up
-    ESP.deepSleep(1000 * 1000, RF_DEFAULT);
-    Serial.println("HORUNGE");
+    // ESP.deepSleep(sleepTime * 1000, RF_DEFAULT);
     ESP.reset(); // Reset and try again
 }
