@@ -23,6 +23,7 @@ const unsigned long maxOnDuration = 10000;
 const unsigned long reconnectInterval = 5000;
 const unsigned long reconnectTimeout = 60000;
 const unsigned long standbyDuration = 7200000;
+// temp
 
 void setup()
 {
