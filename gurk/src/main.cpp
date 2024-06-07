@@ -10,10 +10,10 @@
 
 const char *ssid = "Eagle_389AD0";
 const char *password = "CiKbPq6b";
-const char *serverUrl = "https://owadestig.github.io/gurkVattning/data";
-const char *noButtonSignalUrl = "https://owadestig.github.io/gurkVattning/no_button_signal";
-const char *logLightStatusUrl = "https://owadestig.github.io/gurkVattning/log_light_status";
-const char *constantsUrl = "https://owadestig.github.io/gurkVattning/constants";
+const char *serverUrl = "https://gurkvattning.onrender.com/data";
+const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_signal";
+const char *logLightStatusUrl = "https://gurkvattning.onrender.com/log_light_status";
+const char *constantsUrl = "https://gurkvattning.onrender.com/constants";
 
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
