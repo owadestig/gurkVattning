@@ -18,7 +18,7 @@ const char *constantsUrl = "https://gurkvattning.onrender.com/constants";
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
 const int pinInput = 14;
-const int waitThreshold = 1000 * 60 * 240;
+const int waitThreshold = 1000 * 60 * 240; // 4 timmar?
 const unsigned long maxOnDuration = 10000;
 const unsigned long reconnectInterval = 5000;
 const unsigned long reconnectTimeout = 60000;
@@ -39,6 +39,8 @@ void setup()
   // Disable the WiFi persistence. The ESP8266 will not load and save WiFi settings in the flash memory.
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
+  Serial.println("I setup");
+
   connectToWiFi(ssid, password);
 
   pinMode(pinLED, OUTPUT);
@@ -50,6 +52,7 @@ void setup()
 
 void loop()
 {
+  Serial.println("in the loop");
   if (WiFi.status() == WL_CONNECTED)
   {
     WiFiClient client;

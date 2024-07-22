@@ -99,9 +99,9 @@ void processResponse(const String &payload)
     Serial.print("Current Time = ");
     Serial.println(current_time);
 
-    if (time_until_watering < waitThreshold + 15000)
-    {
-        if (time_until_watering > 0)
+    if (time_until_watering < waitThreshold + 15000) // 4 timmar + 15 sekunder
+    {                                                // är här inne om mindre än waitThreshold tid tills vattning
+        if (time_until_watering > 0)                 // om tiden är mer än 0, alltså vi ska vänta
         {
             disconnectFromWiFi();
             Serial.printf("Sleeping for %d ms before doing a cycle\n", time_until_watering);
@@ -113,7 +113,7 @@ void processResponse(const String &payload)
         delay(watering_time);
         handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
     }
-    else
+    else // om mer än wait threshhold, sov o kolla igen om waitthreshold tid
     {
         disconnectFromWiFi();
         Serial.printf("Sleeping for %d ms\n", waitThreshold);
