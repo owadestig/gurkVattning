@@ -15,10 +15,3 @@ Sova 4? timmar, vakna, pinga servern efter hur många sekunder det är till näs
 8.  
 9.  
 10. 
-
-
-LÄNKAR
-https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
-
-https://www.instructables.com/ESP8266-Pro-Tips/
-

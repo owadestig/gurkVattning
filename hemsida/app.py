@@ -4,59 +4,70 @@ import random
 
 app = Flask(__name__)
 
-# Set the initial timer activation time (e.g., at the start of the next minute)
-time_interval = timedelta(hours=12)
-next_timer_activation = datetime.now() + time_interval
+# Set watering times
+afternoon_watering_time = datetime.now().replace(
+    hour=14, minute=30, second=0, microsecond=0
+)
+night_watering_time = datetime.now().replace(hour=2, minute=30, second=0, microsecond=0)
+
+# If current time is past 14:30, set next afternoon watering to tomorrow
+if datetime.now().time() >= afternoon_watering_time.time():
+    afternoon_watering_time += timedelta(days=1)
+
+# If current time is past 2:30 AM but before 14:30, set next night watering to tomorrow
+if (
+    datetime.now().time() >= night_watering_time.time()
+    and datetime.now().time() < afternoon_watering_time.time()
+):
+    night_watering_time += timedelta(days=1)
 
 # Set watering_time
-watering_time = 1000 * 60 * 3  # 3 minuter
+watering_time = 1000 * 60 * 3  # 3 minutes
 
 # Constants
 constants = {
     "pinLED": 5,
     "pinInput": 14,
-    "waitThreshold": 8000,  # Hur länge den ska sova om tid kvar är mer än detta, #! 4 timmar
-    "maxOnDuration": 10000,  # tills den ska sluta snurra om knappen är trasig #! 10 sekunder
-    "reconnectInterval": 5000,  # hur ofta jag söker efter nät ifall den inte hittar, intervall #! 5 sekunder
-    "reconnectTimeout": 60000,  # efter hur mycket tid den ska sluta leta efter nät o somna #! 1 minute
-    "standbyDuration": 7200000,  # Om det inte gick att ansluta till internet #! 2 timmar
+    "waitThreshold": 8000,
+    "maxOnDuration": 10000,
+    "reconnectInterval": 5000,
+    "reconnectTimeout": 60000,
+    "standbyDuration": 7200000,
 }
 
-"""
-DEFAULT
-# Set watering_time
-watering_time = 1000 * 60 * 5  # 3 minuter
-constants = {
-    "pinLED": 5,
-    "pinInput": 14,
-    "waitThreshold": 1000
-    * 60
-    * 240,  # Hur länge den ska sova om tid kvar är mer än detta, #! 4 timmar
-    "maxOnDuration": 10000,  # tills den ska sluta snurra om knappen är trasig #! 10 sekunder
-    "reconnectInterval": 5000,  # hur ofta jag söker efter nät ifall den inte hittar, intervall #! 5 sekunder
-    "reconnectTimeout": 60000,  # efter hur mycket tid den ska sluta leta efter nät o somna #! 1 minute
-    "standbyDuration": 7200000,  # Om det inte gick att ansluta till internet #! 2 timmar
-}
-"""
 
-
-# Endpoint to provide constants
 @app.route("/constants", methods=["GET"])
 def get_constants():
     return jsonify(constants)
 
 
-# Endpoint that returns the time until the next timer activation and the LED duration
 @app.route("/data", methods=["GET"])
 def get_data():
-    global next_timer_activation, watering_time, time_interval
+    global afternoon_watering_time, night_watering_time, watering_time
     now = datetime.now()
-    remaining_time = (next_timer_activation - now).total_seconds()
-    print("Time until watering = ", remaining_time)
-    if remaining_time <= 0:
-        next_timer_activation += time_interval
-        print(f"New LED duration: {watering_time} ms")
 
+    # Determine next watering time
+    if now < night_watering_time:
+        next_watering_time = night_watering_time
+    elif now < afternoon_watering_time:
+        next_watering_time = afternoon_watering_time
+    else:
+        next_watering_time = night_watering_time + timedelta(days=1)
+
+    remaining_time = (next_watering_time - now).total_seconds()
+    print("Time until watering = ", remaining_time)
+
+    if remaining_time <= 0:
+        # Update watering times for the next day
+        if next_watering_time.hour == 2:  # If it was night watering
+            night_watering_time += timedelta(days=1)
+            next_watering_time = afternoon_watering_time
+        else:  # If it was afternoon watering
+            afternoon_watering_time += timedelta(days=1)
+            next_watering_time = night_watering_time + timedelta(days=1)
+        remaining_time = (next_watering_time - now).total_seconds()
+
+    print(f"New LED duration: {watering_time} ms")
     return jsonify(
         time_until_watering=int(remaining_time),
         watering_time=watering_time,
@@ -64,16 +75,13 @@ def get_data():
     )
 
 
-# Endpoint to handle the request when no HIGH signal is received
 @app.route("/no_button_signal", methods=["GET"])
 def no_signal():
     no_signal_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"No button signal received at {no_signal_time}")
-    # Perform any desired actions here (e.g., logging, sending notifications, etc.)
     return "OK"
 
 
-# Endpoint to log light status
 @app.route("/log_light_status", methods=["POST"])
 def log_light_status():
     data = request.json
@@ -81,7 +89,6 @@ def log_light_status():
     timestamp = data.get("timestamp")
     log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"Light status: {status}, Timestamp: {timestamp}, Logged at: {log_time}")
-    # Perform any desired actions here (e.g., logging, sending notifications, etc.)
     return "Logged"
 
 

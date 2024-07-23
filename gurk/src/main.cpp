@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>
 #include "../lib/ESP8266Ping-master/src/ESP8266Ping.h"
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include "../lib/ArduinoJson-v6.21.5.h"
 #include <ESP8266HTTPClient.h>
 #include "WiFiManager.h"
@@ -23,7 +23,6 @@ const unsigned long maxOnDuration = 10000;
 const unsigned long reconnectInterval = 5000;
 const unsigned long reconnectTimeout = 60000;
 const unsigned long standbyDuration = 7200000;
-// temp
 
 void setup()
 {
@@ -36,44 +35,57 @@ void setup()
   delay(1);
   WiFi.forceSleepWake();
   delay(1);
+
   // Disable the WiFi persistence. The ESP8266 will not load and save WiFi settings in the flash memory.
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   Serial.println("I setup");
-
   connectToWiFi(ssid, password);
-
   pinMode(pinLED, OUTPUT);
   pinMode(pinInput, INPUT_PULLUP); // Enable internal pull-up resistor
-
   Serial.println("Setup complete");
   resetLED();
 }
 
 void loop()
 {
-  Serial.println("in the loop");
+  int counter = 0;
   if (WiFi.status() == WL_CONNECTED)
   {
-    WiFiClient client;
-    HTTPClient http;
-    http.begin(client, serverUrl);
-    int httpCode = http.GET();
+    WiFiClientSecure client;
+    client.setInsecure(); // Disable SSL certificate verification
 
-    if (httpCode > 0)
+    HTTPClient https;
+
+    Serial.print("[HTTPS] begin...\n");
+    if (https.begin(client, serverUrl))
     {
-      String payload = http.getString();
-      Serial.println(httpCode);
-      Serial.println(payload);
-      processResponse(payload); // Call the function with the correct parameters
+      Serial.print("[HTTPS] GET...\n");
+      int httpCode = https.GET();
+
+      if (httpCode > 0)
+      {
+        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+        {
+          String payload = https.getString();
+          Serial.println(payload);
+          processResponse(payload); // Call the function with the correct parameters
+        }
+      }
+      else
+      {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        digitalWrite(pinLED, LOW);
+      }
+
+      https.end();
     }
     else
     {
-      Serial.print("Error on HTTP request: ");
-      Serial.println(http.errorToString(httpCode).c_str());
-      digitalWrite(pinLED, LOW);
+      Serial.printf("[HTTPS] Unable to connect\n");
     }
-    http.end();
   }
   else
   {
@@ -81,5 +93,5 @@ void loop()
     digitalWrite(pinLED, LOW);
     reconnectWiFi();
   }
-  delay(5000); // Add a delay to reduce the serial output frequency
+  delay(20000); // Add a delay to reduce the serial output frequency
 }

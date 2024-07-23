@@ -91,7 +91,6 @@ void processResponse(const String &payload)
     int time_until_watering = 1000 * int(doc["time_until_watering"]);
     unsigned long watering_time = doc["watering_time"]; // Access the value as an integer
     String current_time = doc["current_time"];
-
     Serial.print("time_until_watering after JSON parsing = ");
     Serial.println(time_until_watering);
     Serial.print("LED On Duration = ");
