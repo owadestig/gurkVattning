@@ -1,20 +1,28 @@
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
+import pytz
 
 app = Flask(__name__)
+
+# Set your timezone here
+timezone = pytz.timezone("Europe/Stockholm")  # Replace with your actual timezone
 
 
 # Set watering times
 def get_next_watering_times():
-    now = datetime.now()
+    now = datetime.now(timezone)
     today = now.date()
     tomorrow = today + timedelta(days=1)
 
-    afternoon = datetime.combine(today, datetime.min.time().replace(hour=14, minute=30))
-    night = datetime.combine(tomorrow, datetime.min.time().replace(hour=2, minute=30))
+    afternoon = timezone.localize(
+        datetime.combine(today, datetime.min.time().replace(hour=14, minute=30))
+    )
+    night = timezone.localize(
+        datetime.combine(tomorrow, datetime.min.time().replace(hour=2, minute=30))
+    )
 
     if now > afternoon:
-        afternoon = datetime.combine(tomorrow, afternoon.time())
+        afternoon = timezone.localize(datetime.combine(tomorrow, afternoon.time()))
 
     return afternoon, night
 
@@ -36,7 +44,7 @@ constants = {
 
 @app.route("/data", methods=["GET"])
 def get_data():
-    now = datetime.now()
+    now = datetime.now(timezone)
     afternoon, night = get_next_watering_times()
 
     if now < afternoon:
@@ -56,8 +64,8 @@ def get_data():
     return jsonify(
         time_until_watering=int(remaining_time),
         watering_time=watering_time,
-        current_time=now.strftime("%Y-%m-%d %H:%M:%S"),
-        next_watering_time=next_watering_time.strftime("%Y-%m-%d %H:%M:%S"),
+        current_time=now.strftime("%Y-%m-%d %H:%M:%S %Z"),
+        next_watering_time=next_watering_time.strftime("%Y-%m-%d %H:%M:%S %Z"),
     )
 
 
