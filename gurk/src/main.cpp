@@ -18,7 +18,7 @@ const char *constantsUrl = "https://gurkvattning.onrender.com/constants";
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
 const int pinInput = 14;
-const int waitThreshold = 1000 * 60 * 1; // 1 timme
+const int waitThreshold = 1000 * 60 * 60; // 1 timme
 const unsigned long maxOnDuration = 10000; // not used
 const unsigned long reconnectInterval = 5000; // not used
 const unsigned long reconnectTimeout = 60000; // not used
