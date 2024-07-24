@@ -98,7 +98,7 @@ void processResponse(const String &payload)
     Serial.print("Current Time = ");
     Serial.println(current_time);
 
-    if (time_until_watering < waitThreshold + 15000) // 4 timmar + 15 sekunder
+    if (time_until_watering < waitThreshold + 20000) // 4 timmar + 15 sekunder
     {                                                // är här inne om mindre än waitThreshold tid tills vattning
         if (time_until_watering > 0)                 // om tiden är mer än 0, alltså vi ska vänta
         {
