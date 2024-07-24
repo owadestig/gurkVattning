@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
 import pytz
+from datetime import datetime, timedelta, time
 
 app = Flask(__name__)
 
@@ -18,19 +19,25 @@ constants = {
     "standbyDuration": 7200000,
 }
 
-
-# Set watering times to be every other minute
 def get_next_watering_time():
     now = datetime.now(timezone)
-    next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-    next_watering_time = (
-        next_minute if now.minute % 2 == 0 else next_minute + timedelta(minutes=1)
-    )
+    # Define the two fixed watering times: 00:10 AM and 12:10 PM
+    first_watering_time = now.replace(hour=0, minute=10, second=0, microsecond=0)
+    second_watering_time = now.replace(hour=12, minute=10, second=0, microsecond=0)
+    
+    if now < first_watering_time:
+        next_watering_time = first_watering_time
+    elif now < second_watering_time:
+        next_watering_time = second_watering_time
+    else:
+        next_watering_time = first_watering_time + timedelta(days=1)
+    
     return next_watering_time
 
 
+
 # Set watering_time to 15 seconds
-watering_time = 1000 * 15  # 15 seconds
+watering_time = 1000 * 60 * 5  # 5 minuter
 
 
 @app.route("/data", methods=["GET"])

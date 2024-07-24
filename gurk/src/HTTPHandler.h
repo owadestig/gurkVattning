@@ -2,7 +2,7 @@
 #define HTTPHANDLER_H
 
 #include <ESP8266HTTPClient.h>
-#include "WifiManager.h"
+#include "WiFiManager.h"
 #include "../lib/ESP8266Ping-master/src/ESP8266Ping.h"
 
 void sendRequestToServer(const char *url);

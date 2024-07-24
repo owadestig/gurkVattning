@@ -18,11 +18,11 @@ const char *constantsUrl = "https://gurkvattning.onrender.com/constants";
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
 const int pinInput = 14;
-const int waitThreshold = 1000 * 20; // 4 timmar?
-const unsigned long maxOnDuration = 10000;
-const unsigned long reconnectInterval = 5000;
-const unsigned long reconnectTimeout = 60000;
-const unsigned long standbyDuration = 7200000;
+const int waitThreshold = 1000 * 60 * 1; // 1 timme
+const unsigned long maxOnDuration = 10000; // not used
+const unsigned long reconnectInterval = 5000; // not used
+const unsigned long reconnectTimeout = 60000; // not used
+const unsigned long standbyDuration = 7200000; // not used
 
 void setup()
 {
@@ -77,7 +77,6 @@ void loop()
       else
       {
         Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
-        digitalWrite(pinLED, LOW);
       }
 
       https.end();
@@ -85,13 +84,14 @@ void loop()
     else
     {
       Serial.printf("[HTTPS] Unable to connect\n");
+      delay(20000);
     }
   }
   else
   {
     Serial.println("WiFi Disconnected");
-    digitalWrite(pinLED, LOW);
+    delay(20000);
     reconnectWiFi();
   }
-  delay(20000); // Add a delay to reduce the serial output frequency
+  delay(1000); // Add a delay to reduce the serial output frequency
 }
