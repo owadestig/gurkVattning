@@ -7,29 +7,6 @@ app = Flask(__name__)
 # Set your timezone here
 timezone = pytz.timezone("Europe/Stockholm")  # Replace with your actual timezone
 
-
-# Set watering times
-def get_next_watering_times():
-    now = datetime.now(timezone)
-    today = now.date()
-    tomorrow = today + timedelta(days=1)
-
-    afternoon = timezone.localize(
-        datetime.combine(today, datetime.min.time().replace(hour=14, minute=30))
-    )
-    night = timezone.localize(
-        datetime.combine(tomorrow, datetime.min.time().replace(hour=2, minute=30))
-    )
-
-    if now > afternoon:
-        afternoon = timezone.localize(datetime.combine(tomorrow, afternoon.time()))
-
-    return afternoon, night
-
-
-# Set watering_time
-watering_time = 1000 * 60 * 3  # 3 minutes
-
 # Constants (unchanged)
 constants = {
     "pinLED": 5,
@@ -42,19 +19,24 @@ constants = {
 }
 
 
+# Set watering times to be every other minute
+def get_next_watering_time():
+    now = datetime.now(timezone)
+    next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+    next_watering_time = (
+        next_minute if now.minute % 2 == 0 else next_minute + timedelta(minutes=1)
+    )
+    return next_watering_time
+
+
+# Set watering_time to 15 seconds
+watering_time = 1000 * 15  # 15 seconds
+
+
 @app.route("/data", methods=["GET"])
 def get_data():
     now = datetime.now(timezone)
-    afternoon, night = get_next_watering_times()
-
-    if now < afternoon:
-        next_watering_time = afternoon
-    elif now < night:
-        next_watering_time = night
-    else:
-        # This case should never happen due to how we set up the times, but just in case:
-        next_watering_time = afternoon + timedelta(days=1)
-
+    next_watering_time = get_next_watering_time()
     remaining_time = (next_watering_time - now).total_seconds()
 
     print(f"Current time: {now}")
