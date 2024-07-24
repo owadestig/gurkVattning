@@ -50,6 +50,27 @@ def get_data():
         next_watering_time=next_watering_time.strftime("%Y-%m-%d %H:%M:%S %Z"),
     )
 
+# Endpoint to handle the request when no HIGH signal is received
+@app.route("/no_button_signal", methods=["GET"])
+def no_signal():
+    no_signal_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"No button signal received at {no_signal_time}")
+    # Perform any desired actions here (e.g., logging, sending notifications, etc.)
+    return "OK"
+
+
+# Endpoint to log light status
+@app.route("/log_light_status", methods=["POST"])
+def log_light_status():
+    data = request.json
+    status = data.get("status")
+    timestamp = data.get("timestamp")
+    log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    print(f"Light status: {status}, Timestamp: {timestamp}, Logged at: {log_time}")
+    # Perform any desired actions here (e.g., logging, sending notifications, etc.)
+    return "Logged"
+
 
 # Other routes remain unchanged
 
