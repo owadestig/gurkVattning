@@ -19,21 +19,21 @@ constants = {
     "standbyDuration": 7200000,
 }
 
+
 def get_next_watering_time():
     now = datetime.now(timezone)
     # Define the two fixed watering times: 00:10 AM and 12:10 PM
     first_watering_time = now.replace(hour=0, minute=20, second=0, microsecond=0)
-    second_watering_time = now.replace(hour=12, minute=20, second=0, microsecond=0)
-    
+    second_watering_time = now.replace(hour=14, minute=50, second=0, microsecond=0)
+
     if now < first_watering_time:
         next_watering_time = first_watering_time
     elif now < second_watering_time:
         next_watering_time = second_watering_time
     else:
         next_watering_time = first_watering_time + timedelta(days=1)
-    
-    return next_watering_time
 
+    return next_watering_time
 
 
 # Set watering_time to 15 seconds
@@ -57,6 +57,7 @@ def get_data():
         next_watering_time=next_watering_time.strftime("%Y-%m-%d %H:%M:%S %Z"),
     )
 
+
 # Endpoint to handle the request when no HIGH signal is received
 @app.route("/no_button_signal", methods=["GET"])
 def no_signal():
@@ -73,7 +74,7 @@ def log_light_status():
     status = data.get("status")
     timestamp = data.get("timestamp")
     log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     print(f"Light status: {status}, Timestamp: {timestamp}, Logged at: {log_time}")
     # Perform any desired actions here (e.g., logging, sending notifications, etc.)
     return "Logged"
