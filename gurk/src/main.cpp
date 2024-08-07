@@ -10,19 +10,15 @@
 
 const char *ssid = "Eagle_389AD0";
 const char *password = "CiKbPq6b";
-const char *serverUrl = "https://gurkvattning.onrender.com/data";
+const char *serverUrl = "https://gurkvattning.onrender.com/get_device_variables";
 const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_signal";
-const char *logLightStatusUrl = "https://gurkvattning.onrender.com/log_light_status";
-const char *constantsUrl = "https://gurkvattning.onrender.com/constants";
+const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
 const int pinLED = 5;
 const int pinInput = 14;
-const int waitThreshold = 1000 * 60 * 60; // 1 timme
-const unsigned long maxOnDuration = 10000; // not used
-const unsigned long reconnectInterval = 5000; // not used
-const unsigned long reconnectTimeout = 60000; // not used
-const unsigned long standbyDuration = 7200000; // not used
+const unsigned long maxOnDuration = 10000;
+const int errorTimeout = 20000; // 20 sekunder
 
 void setup()
 {
@@ -49,49 +45,26 @@ void setup()
 
 void loop()
 {
-  int counter = 0;
   if (WiFi.status() == WL_CONNECTED)
   {
-    WiFiClientSecure client;
-    client.setInsecure(); // Disable SSL certificate verification
-
-    HTTPClient https;
-
-    Serial.print("[HTTPS] begin...\n");
-    if (https.begin(client, serverUrl))
+    String payload = sendRequestToServer(serverUrl);
+    if (payload != "error")
     {
-      Serial.print("[HTTPS] GET...\n");
-      int httpCode = https.GET();
-
-      if (httpCode > 0)
-      {
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-        {
-          String payload = https.getString();
-          Serial.println(payload);
-          processResponse(payload); // Call the function with the correct parameters
-        }
-      }
-      else
-      {
-        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
-      }
-
-      https.end();
+      processResponse(payload);
     }
     else
     {
-      Serial.printf("[HTTPS] Unable to connect\n");
-      delay(20000);
+      disconnectFromWiFi();
+      delay(errorTimeout);
+      connectToWiFi(ssid, password);
+      Serial.println("Error");
     }
   }
   else
   {
     Serial.println("WiFi Disconnected");
-    delay(20000);
-    reconnectWiFi();
+    delay(errorTimeout);
+    connectToWiFi(ssid, password);
   }
   delay(1000); // Add a delay to reduce the serial output frequency
 }

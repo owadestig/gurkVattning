@@ -1,49 +1,23 @@
 #include "HTTPHandler.h"
 
-void sendRequestToServer(const char *url)
+String sendRequestToServer(const char *serverUrl)
 {
-    if (WiFi.status() == WL_CONNECTED)
+    WiFiClientSecure client;
+    HTTPClient https;
+    String payload = "error";
+    client.setInsecure(); // Disable SSL certificate verification
+
+    if (https.begin(client, serverUrl))
     {
-        WiFiClient client;
-        HTTPClient http;
-        http.begin(client, url);
-        int httpCode = http.GET();
+        int httpCode = https.GET();
         if (httpCode > 0)
         {
-            String payload = http.getString();
-            Serial.println(payload);
+            if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+            {
+                String payload = https.getString();
+            }
         }
-        else
-        {
-            Serial.print("Error on HTTP request: ");
-            Serial.println(http.errorToString(httpCode).c_str());
-        }
-        http.end();
+        https.end();
     }
-    else
-    {
-        Serial.println("WiFi Disconnected");
-        reconnectWiFi();
-    }
-}
-
-int check_if_server_is_up(const char *url)
-{
-    bool p = Ping.ping(url);
-    if (p == true)
-    {
-        Serial.print("ITS TRUE");
-    }
-    else
-    {
-        Serial.print("ITS FALSE");
-    }
-
-    if (!Ping.ping(url))
-    {
-        Serial1.print("WHAT DA FUCK VI ÄR HÄR");
-        Serial.println("Server is down, doing basic script...");
-        return 0;
-    }
-    return 1;
+    return payload;
 }

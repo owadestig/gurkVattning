@@ -12,12 +12,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
-// void handleLED(int value, const char *ssid, const char *password, int waitState);
-void handleLED2(int time_until_watering, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState);
+void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState);
 
-void processResponse(const String &payload); // Corrected function signature
+void processResponse(const String &payload);
 void resetLED();
-void offlineMode();
-void handleLEDDisconnected(int waitState);
 
 #endif // LED_HANDLER_H

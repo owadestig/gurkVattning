@@ -2,20 +2,19 @@
 
 extern const int pinLED;
 extern const int pinInput;
-extern const char *logLightStatusUrl;
+extern const char *set_is_watering_rul;
 
-void logLightStatus(const char *status)
+void sendWateringStatus(boolean status)
 {
     if (WiFi.status() == WL_CONNECTED)
     {
         WiFiClient client;
         HTTPClient http;
-        http.begin(client, logLightStatusUrl);
+        http.begin(client, set_is_watering_rul);
         http.addHeader("Content-Type", "application/json");
 
         StaticJsonDocument<200> doc;
-        doc["status"] = status;
-        doc["timestamp"] = String(millis());
+        doc["isWatering"] = status;
 
         String payload;
         serializeJson(doc, payload);
@@ -44,7 +43,6 @@ void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonS
 {
     // Turn on the LED
     digitalWrite(pinLED, HIGH);
-    logLightStatus("on");
     disconnectFromWiFi();
     unsigned long startTime = millis();
     bool ButtonSignal = false;
@@ -67,7 +65,6 @@ void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonS
     // Turn off the LED
     digitalWrite(pinLED, LOW);
     connectToWiFi(ssid, password);
-    logLightStatus("off");
 
     // If no button signal received, perform shutdown
     if (!ButtonSignal)
@@ -89,18 +86,18 @@ void processResponse(const String &payload)
     }
 
     int time_until_watering = 1000 * int(doc["time_until_watering"]);
-    unsigned long watering_time = doc["watering_time"]; // Access the value as an integer
-    String current_time = doc["current_time"];
+    unsigned long watering_time = doc["watering_time"] * 1000 * 60; // Access the value as an integer
+    int sleep_time = doc["sleep_time"] * 1000;
     Serial.print("time_until_watering after JSON parsing = ");
     Serial.println(time_until_watering);
     Serial.print("LED On Duration = ");
     Serial.println(watering_time);
-    Serial.print("Current Time = ");
-    Serial.println(current_time);
+    Serial.print("Sleep Time = ");
+    Serial.println(sleep_time);
 
-    if (time_until_watering < waitThreshold + 20000) // 4 timmar + 15 sekunder
-    {                                                // är här inne om mindre än waitThreshold tid tills vattning
-        if (time_until_watering > 0)                 // om tiden är mer än 0, alltså vi ska vänta
+    if (time_until_watering < sleep_time + 20000) // 4 timmar + 15 sekunder
+    {                                             // är här inne om mindre än sleep_time tid tills vattning
+        if (time_until_watering > 0)              // om tiden är mer än 0, alltså vi ska vänta
         {
             disconnectFromWiFi();
             Serial.printf("Sleeping for %d ms before doing a cycle\n", time_until_watering);
@@ -109,14 +106,18 @@ void processResponse(const String &payload)
         }
 
         handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        sendWateringStatus(true);
+        disconnectFromWiFi();
         delay(watering_time);
+        connectToWiFi(ssid, password);
         handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        sendWateringStatus(false);
     }
-    else // om mer än wait threshhold, sov o kolla igen om waitthreshold tid
+    else // om mer än wait threshhold, sov o kolla igen om sleep_time tid
     {
         disconnectFromWiFi();
-        Serial.printf("Sleeping for %d ms\n", waitThreshold);
-        delay(waitThreshold); // Sleep for the threshold time
+        Serial.printf("Sleeping for %d ms\n", sleep_time);
+        delay(sleep_time); // Sleep for the threshold time
         connectToWiFi(ssid, password);
     }
 }

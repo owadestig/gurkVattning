@@ -28,32 +28,6 @@ void connectToWiFi(const char *ssid, const char *password)
     Serial.println(WiFi.localIP());
 }
 
-void reconnectWiFi()
-{
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.println("Attempting to reconnect to WiFi...");
-        WiFi.reconnect();
-
-        unsigned long startTime = millis();
-        while (WiFi.status() != WL_CONNECTED && millis() - startTime < RECONNECT_TIMEOUT)
-        {
-            delay(RECONNECT_INTERVAL);
-            Serial.print(".");
-        }
-
-        if (WiFi.status() == WL_CONNECTED)
-        {
-            Serial.println("\nReconnected to WiFi!");
-        }
-        else
-        {
-            Serial.println("\nFailed to reconnect. Entering standby mode.");
-            delay(STANDBY_DURATION);
-        }
-    }
-}
-
 void disconnectFromWiFi()
 {
     Serial.println("Disconnecting WiFi");
