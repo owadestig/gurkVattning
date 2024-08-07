@@ -23,7 +23,7 @@ constants = {
 def get_next_watering_time():
     now = datetime.now(timezone)
     # Define the two fixed watering times: 00:10 AM and 12:10 PM
-    first_watering_time = now.replace(hour=23, minute=55, second=0, microsecond=0)
+    first_watering_time = now.replace(hour=00, minute=2, second=0, microsecond=0)
     second_watering_time = now.replace(hour=14, minute=00, second=0, microsecond=0)
 
     if now < first_watering_time:
