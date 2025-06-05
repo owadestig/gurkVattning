@@ -1,35 +1,115 @@
-#include <WiFiManager.h>
+#include "WiFiManager.h"
+#include "Utils.h"
+#include <Arduino.h>
 
-const unsigned long RECONNECT_INTERVAL = 5000;  // 5 seconds
-const unsigned long RECONNECT_TIMEOUT = 120000; // 2 minutes
-const unsigned long STANDBY_DURATION = 7200000; // 2 hours
+WiFiManager *WiFiManager::instance = nullptr;
 
-void connectToWiFi(const char *ssid, const char *password)
+WiFiManager::WiFiManager()
+    : wifiInterface(new ESP8266WiFiWrapper()), currentStatus(WiFiStatus::DISCONNECTED),
+      connectionStartTime(0), ownsInterface(true)
 {
+}
+
+WiFiManager::~WiFiManager()
+{
+    if (ownsInterface && wifiInterface)
+    {
+        delete wifiInterface;
+    }
+}
+
+WiFiManager &WiFiManager::getInstance()
+{
+    if (instance == nullptr)
+    {
+        instance = new WiFiManager();
+    }
+    return *instance;
+}
+
+void WiFiManager::setWiFiInterface(IWiFiInterface *interface)
+{
+    if (instance && instance->ownsInterface && instance->wifiInterface)
+    {
+        delete instance->wifiInterface;
+    }
+    if (instance)
+    {
+        instance->wifiInterface = interface;
+        instance->ownsInterface = false;
+    }
+}
+
+void WiFiManager::initializePowerSaving()
+{
+    Serial.println("Initializing power saving WiFi settings...");
+
+    // Power saving setup from main.cpp
+    wifiInterface->mode(WIFI_OFF);
+    wifiInterface->forceSleepBegin();
+    delay(1);
+    wifiInterface->forceSleepWake();
+    delay(1);
+
+    // Disable WiFi persistence
+    wifiInterface->persistent(false);
+    wifiInterface->mode(WIFI_STA);
+}
+
+bool WiFiManager::connectToWiFi(const char *ssid, const char *password)
+{
+    currentStatus = WiFiStatus::CONNECTING;
+
     Serial.print("Connecting to ");
     Serial.println(ssid);
-    WiFi.begin(ssid, password);
 
-    unsigned long startTime = millis();
-    while (WiFi.status() != WL_CONNECTED)
+    wifiInterface->begin(ssid, password);
+    connectionStartTime = millis();
+
+    while (wifiInterface->status() != WL_CONNECTED)
     {
-        delay(500);
+        delay(CONNECTION_CHECK_INTERVAL);
         Serial.print(".");
-        if (millis() - startTime > RECONNECT_TIMEOUT)
+
+        if (millis() - connectionStartTime > RECONNECT_TIMEOUT)
         {
             Serial.println("\nFailed to connect. Entering standby mode.");
+            currentStatus = WiFiStatus::FAILED;
             delay(STANDBY_DURATION);
-            return;
+            return false;
         }
     }
 
+    currentStatus = WiFiStatus::CONNECTED;
     Serial.println("\nWiFi connected");
     Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    Serial.println(getLocalIP());
+
+    return true;
 }
 
-void disconnectFromWiFi()
+void WiFiManager::disconnectFromWiFi()
 {
     Serial.println("Disconnecting WiFi");
-    WiFi.mode(WIFI_OFF);
+    wifiInterface->mode(WIFI_OFF);
+    currentStatus = WiFiStatus::DISCONNECTED;
+}
+
+bool WiFiManager::isConnected() const
+{
+    return currentStatus == WiFiStatus::CONNECTED;
+}
+
+WiFiStatus WiFiManager::getStatus() const
+{
+    return currentStatus;
+}
+
+String WiFiManager::getLocalIP() const
+{
+    if (currentStatus == WiFiStatus::CONNECTED)
+    {
+        return wifiInterface->localIP();
+    }
+    return "0.0.0.0";
 }
