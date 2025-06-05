@@ -5,7 +5,7 @@
 #include <ESP8266HTTPClient.h>
 #include "WiFiManager.h"
 #include "HTTPHandler.h"
-#include "LEDHandler.h"
+#include "MotorHandler.h"
 #include "Config.h"
 
 const char *ssid = "Eagle_389AD0";
@@ -15,7 +15,7 @@ const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_sig
 const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
-const int pinLED = 5;
+const int pinMotor = 5;
 const int pinInput = 14;
 const unsigned long maxOnDuration = 10000;
 const int errorTimeout = 20000; // 20 sekunder
@@ -37,10 +37,10 @@ void setup()
   WiFi.mode(WIFI_STA);
   Serial.println("I setup");
   connectToWiFi(ssid, password);
-  pinMode(pinLED, OUTPUT);
+  pinMode(pinMotor, OUTPUT);
   pinMode(pinInput, INPUT_PULLUP); // Enable internal pull-up resistor
   Serial.println("Setup complete");
-  resetLED();
+  resetMotor();
 }
 
 void loop()

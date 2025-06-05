@@ -1,6 +1,6 @@
-#include "LEDHandler.h"
+#include "MotorHandler.h"
 
-extern const int pinLED;
+extern const int pinMotor;
 extern const int pinInput;
 extern const char *set_is_watering_rul;
 
@@ -39,10 +39,10 @@ void sendWateringStatus(boolean status)
     }
 }
 
-void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState)
+void handleMotor(int time_until_watering, int maxOnDuration, const char *noButtonSignalUrl, const char *ssid, const char *password, int waitState)
 {
-    // Turn on the LED
-    digitalWrite(pinLED, HIGH);
+    // Turn on the Motor
+    digitalWrite(pinMotor, HIGH);
     disconnectFromWiFi();
     unsigned long startTime = millis();
     bool ButtonSignal = false;
@@ -62,8 +62,8 @@ void handleLED(int time_until_watering, int maxOnDuration, const char *noButtonS
         delay(10); // Small delay to prevent high CPU usage
     }
 
-    // Turn off the LED
-    digitalWrite(pinLED, LOW);
+    // Turn off the Motor
+    digitalWrite(pinMotor, LOW);
     connectToWiFi(ssid, password);
 
     // If no button signal received, perform shutdown
@@ -90,7 +90,7 @@ void processResponse(const String &payload)
     int sleep_time = doc["sleep_time"] * 1000;
     Serial.print("time_until_watering after JSON parsing = ");
     Serial.println(time_until_watering);
-    Serial.print("LED On Duration = ");
+    Serial.print("Motor On Duration = ");
     Serial.println(watering_time);
     Serial.print("Sleep Time = ");
     Serial.println(sleep_time);
@@ -105,12 +105,12 @@ void processResponse(const String &payload)
             connectToWiFi(ssid, password);
         }
 
-        handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+        handleMotor(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
         sendWateringStatus(true);
         disconnectFromWiFi();
         delay(watering_time);
         connectToWiFi(ssid, password);
-        handleLED(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        handleMotor(time_until_watering, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
         sendWateringStatus(false);
     }
     else // om mer än wait threshhold, sov o kolla igen om sleep_time tid
@@ -122,22 +122,22 @@ void processResponse(const String &payload)
     }
 }
 
-void resetLED()
+void resetMotor()
 {
-    digitalWrite(pinLED, HIGH);
+    digitalWrite(pinMotor, HIGH);
     delay(5000);
-    digitalWrite(pinLED, LOW);
+    digitalWrite(pinMotor, LOW);
     if (digitalRead(pinInput) == HIGH)
     {
-        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        handleMotor(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
     }
 
     if (digitalRead(pinInput) == LOW)
     {
-        handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
+        handleMotor(0, maxOnDuration, noButtonSignalUrl, ssid, password, HIGH);
         if (digitalRead(pinInput) == HIGH)
         {
-            handleLED(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
+            handleMotor(0, maxOnDuration, noButtonSignalUrl, ssid, password, LOW);
         }
     }
 }
