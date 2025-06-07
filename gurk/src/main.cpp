@@ -15,8 +15,8 @@ const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_sig
 const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
-const int pinMotor = 5;
-const int pinInput = 14;
+const int pinMotor = 16;
+const int pinInput = 2;
 const unsigned long maxOnDuration = 10000;
 const int errorTimeout = 20000; // 20 sekunder
 
