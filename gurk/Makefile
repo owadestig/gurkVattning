@@ -4,6 +4,7 @@ TEST_DIR = test
 WIFI_TARGET = $(TEST_DIR)/test_wifi_manager
 HTTP_TARGET = $(TEST_DIR)/test_http_handler
 WATER_TARGET = $(TEST_DIR)/test_water_controller
+INTEGRATION_TARGET = test_integration
 WIFI_SOURCES = $(TEST_DIR)/test_wifi_manager.cpp
 HTTP_SOURCES = $(TEST_DIR)/test_http_handler.cpp
 WATER_SOURCES = $(TEST_DIR)/test_water_controller.cpp
@@ -27,16 +28,12 @@ $(WATER_TARGET): $(WATER_SOURCES)
 	@mkdir -p $(TEST_DIR)
 	$(CXX) $(CXXFLAGS) $(DEFINES) -o $(WATER_TARGET) $(WATER_SOURCES)
 
+$(INTEGRATION_TARGET): test/test_integration.cpp test/mock/ArduinoMock.cpp
+	$(CXX) $(CXXFLAGS) -I./test -I./.pio/libdeps/modwifi/ArduinoJson/src \
+	-o $(INTEGRATION_TARGET) test/test_integration.cpp test/mock/ArduinoMock.cpp
+
 # Run all tests
-test: $(WIFI_TARGET) $(HTTP_TARGET) $(WATER_TARGET)
-	@echo "Running WiFiManager tests..."
-	./$(WIFI_TARGET)
-	@echo ""
-	@echo "Running HTTPHandler tests..."
-	./$(HTTP_TARGET)
-	@echo ""
-	@echo "Running WaterController tests..."
-	./$(WATER_TARGET)
+test: test-wifi test-http test-water test-integration
 
 # Run individual test suites
 test-wifi: $(WIFI_TARGET)
@@ -51,9 +48,14 @@ test-water: $(WATER_TARGET)
 	@echo "Running WaterController tests..."
 	./$(WATER_TARGET)
 
+# Integration test with Arduino mock
+test-integration: $(INTEGRATION_TARGET)
+	@echo "Running Integration Tests..."
+	./$(INTEGRATION_TARGET)
+
 # Clean up
 clean:
-	rm -f $(WIFI_TARGET) $(HTTP_TARGET) $(WATER_TARGET)
+	rm -f $(WIFI_TARGET) $(HTTP_TARGET) $(WATER_TARGET) $(INTEGRATION_TARGET)
 
 # Build PlatformIO project (requires PlatformIO to be installed)
 build:
@@ -73,15 +75,16 @@ deploy: test build upload
 # Help
 help:
 	@echo "Available targets:"
-	@echo "  test		- Run all unit tests on development machine"
-	@echo "  test-wifi   - Run only WiFiManager tests"
-	@echo "  test-http   - Run only HTTPHandler tests"
-	@echo "  test-water  - Run only WaterController tests"
-	@echo "  build	   - Build the PlatformIO project"
-	@echo "  upload	  - Upload to ESP8266 device"
-	@echo "  monitor	 - Monitor serial output"
-	@echo "  deploy	  - Run tests, build, and upload"
-	@echo "  clean	   - Clean test artifacts"
-	@echo "  help		- Show this help message"
+	@echo "  test            - Run all unit tests on development machine"
+	@echo "  test-wifi       - Run only WiFiManager tests"
+	@echo "  test-http       - Run only HTTPHandler tests"
+	@echo "  test-water      - Run only WaterController tests"
+	@echo "  test-integration - Run integration tests (JSON processing, logic)"
+	@echo "  build           - Build the PlatformIO project"
+	@echo "  upload          - Upload to ESP8266 device"
+	@echo "  monitor         - Monitor serial output"
+	@echo "  deploy          - Run tests, build, and upload"
+	@echo "  clean           - Clean test artifacts"
+	@echo "  help            - Show this help message"
 
-.PHONY: all test test-wifi test-http test-water clean build upload monitor deploy help
+.PHONY: all test test-wifi test-http test-water test-integration clean build upload monitor deploy help

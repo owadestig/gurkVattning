@@ -1,11 +1,11 @@
-#ifndef HTTPHANDLER_H
-#define HTTPHANDLER_H
+#pragma once
 
 #include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
 #include <WiFiClientSecure.h>
-#include <Arduino.h>
+#include "ArduinoJson.h"
 
-// Abstract interface for HTTP operations (for mocking)
+// Interface for HTTP client operations
 class IHTTPClient
 {
 public:
@@ -16,65 +16,82 @@ public:
     virtual void end() = 0;
 };
 
-// Abstract interface for WiFi Client operations (for mocking)
+// Interface for WiFi client operations
 class IWiFiClient
 {
 public:
     virtual ~IWiFiClient() = default;
-    virtual void setInsecure() = 0;
+    virtual void setInsecure() = 0; // Only used for secure connections
 };
 
-// Real HTTP implementation
+// Wrapper for ESP8266HTTPClient - supports both WiFiClient and WiFiClientSecure
 class ESP8266HTTPWrapper : public IHTTPClient
 {
 private:
-    HTTPClient *httpClient;
-    WiFiClientSecure *wifiClient;
+    HTTPClient httpClient;
+    WiFiClient *regularClient;
+    WiFiClientSecure *secureClient;
+    bool isSecure;
 
 public:
-    ESP8266HTTPWrapper(WiFiClientSecure *client) : wifiClient(client)
-    {
-        httpClient = new HTTPClient();
-    }
+    // Constructor for regular WiFiClient (HTTP)
+    ESP8266HTTPWrapper(WiFiClient *client) : regularClient(client), secureClient(nullptr), isSecure(false) {}
 
-    ~ESP8266HTTPWrapper()
-    {
-        delete httpClient;
-    }
+    // Constructor for WiFiClientSecure (HTTPS)
+    ESP8266HTTPWrapper(WiFiClientSecure *client) : regularClient(nullptr), secureClient(client), isSecure(true) {}
 
     bool begin(const String &url) override
     {
-        return httpClient->begin(*wifiClient, url);
+        if (isSecure && secureClient)
+        {
+            return httpClient.begin(*secureClient, url);
+        }
+        else if (!isSecure && regularClient)
+        {
+            return httpClient.begin(*regularClient, url);
+        }
+        return false;
     }
 
     int GET() override
     {
-        return httpClient->GET();
+        return httpClient.GET();
     }
 
     String getString() override
     {
-        return httpClient->getString();
+        return httpClient.getString();
     }
 
     void end() override
     {
-        httpClient->end();
+        httpClient.end();
     }
 };
 
-// Real WiFi Client implementation
+// Wrapper for WiFiClient - supports both types
 class ESP8266WiFiClientWrapper : public IWiFiClient
 {
 private:
-    WiFiClientSecure *client;
+    WiFiClient *regularClient;
+    WiFiClientSecure *secureClient;
+    bool isSecure;
 
 public:
-    ESP8266WiFiClientWrapper(WiFiClientSecure *wifiClient) : client(wifiClient) {}
+    // Constructor for regular WiFiClient (HTTP)
+    ESP8266WiFiClientWrapper(WiFiClient *client) : regularClient(client), secureClient(nullptr), isSecure(false) {}
+
+    // Constructor for WiFiClientSecure (HTTPS)
+    ESP8266WiFiClientWrapper(WiFiClientSecure *client) : regularClient(nullptr), secureClient(client), isSecure(true) {}
 
     void setInsecure() override
     {
-        client->setInsecure();
+        // Only call setInsecure on WiFiClientSecure
+        if (isSecure && secureClient)
+        {
+            secureClient->setInsecure();
+        }
+        // For regular WiFiClient, this is a no-op since it's already "insecure"
     }
 };
 
@@ -93,25 +110,23 @@ private:
     IHTTPClient *httpClient;
     IWiFiClient *wifiClient;
     bool ownsClients;
+    HTTPStatus lastStatus;
 
     HTTPHandler();
 
 public:
-    static HTTPHandler &getInstance();
-    static void setClients(IHTTPClient *httpClient, IWiFiClient *wifiClient); // For testing
-
     ~HTTPHandler();
+    static HTTPHandler &getInstance();
+    static void setClients(IHTTPClient *http, IWiFiClient *wifi);
 
     String sendRequest(const String &url);
     HTTPStatus getLastStatus() const;
 
-    // Specific methods for your endpoints
+    // Specific methods for different endpoints
     String getDeviceVariables(const String &serverUrl);
     bool sendNoButtonSignal(const String &url);
     bool setIsWatering(const String &url, bool isWatering);
-
-private:
-    HTTPStatus lastStatus;
 };
 
-#endif
+// Keep the old function for backward compatibility
+String sendRequestToServer(const char *serverUrl);

@@ -1,7 +1,6 @@
 #include "WaterController.h"
 #include "WiFiManager.h"
 #include "HTTPHandler.h"
-#include "Utils.h"
 
 extern const int pinLED;
 extern const int pinInput;
@@ -74,8 +73,7 @@ void WaterController::sendWateringStatus(boolean status)
     {
         HTTPHandler &httpHandler = HTTPHandler::getInstance();
 
-        // Create JSON payload
-        StaticJsonDocument<200> doc;
+        StaticJsonDocument<512> doc;
         doc["isWatering"] = status;
         String payload;
         serializeJson(doc, payload);
@@ -98,7 +96,6 @@ void WaterController::handleValveSensor(int timeUntilWatering, int maxOnDuration
 {
     // Turn on the valve
     gpioInterface->digitalWrite(valveControlPin, HIGH);
-    disconnectWiFi();
     unsigned long startTime = gpioInterface->millis();
     bool sensorSignal = false;
 
@@ -120,20 +117,18 @@ void WaterController::handleValveSensor(int timeUntilWatering, int maxOnDuration
 
     // Turn off the valve
     gpioInterface->digitalWrite(valveControlPin, LOW);
-    connectWiFi();
 
-    // If no sensor signal received, perform shutdown
+    // Message if no signal is received
     if (!sensorSignal)
     {
         HTTPHandler &httpHandler = HTTPHandler::getInstance();
         httpHandler.sendRequest(noSensorSignalUrl);
-        shutdown("No sensor signal received, shutting down");
     }
 }
 
 void WaterController::processResponse(const String &payload)
 {
-    StaticJsonDocument<200> doc;
+    StaticJsonDocument<512> doc;
     DeserializationError error = deserializeJson(doc, payload);
     if (error)
     {
@@ -158,26 +153,20 @@ void WaterController::processResponse(const String &payload)
         // är här inne om mindre än sleep_time tid tills vattning
         if (timeUntilWatering > 0)
         { // om tiden är mer än 0, alltså vi ska vänta
-            disconnectWiFi();
             Serial.printf("Sleeping for %d ms before doing a cycle\n", timeUntilWatering);
             gpioInterface->delay(timeUntilWatering);
-            connectWiFi();
         }
 
         handleValveSensor(timeUntilWatering, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, LOW);
         sendWateringStatus(true);
-        disconnectWiFi();
         gpioInterface->delay(wateringTime);
-        connectWiFi();
         handleValveSensor(timeUntilWatering, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
         sendWateringStatus(false);
     }
     else
     { // om mer än wait threshhold, sov o kolla igen om sleep_time tid
-        disconnectWiFi();
         Serial.printf("Sleeping for %d ms\n", sleepTime);
         gpioInterface->delay(sleepTime); // Sleep for the threshold time
-        connectWiFi();
     }
 }
 
@@ -217,25 +206,21 @@ void WaterController::disconnectWiFi()
     wifiManager.disconnectFromWiFi();
 }
 
-// Keep the old functions for backward compatibility
-void resetLED()
-{
-    WaterController::getInstance().resetValve();
-}
-
 void processResponse(const String &payload)
 {
     WaterController::getInstance().processResponse(payload);
 }
 
-void handleLED(int timeUntilWatering, int maxOnDuration, const char *noSensorSignalUrl,
-               const char *ssid, const char *password, int waitState)
-{
-    WaterController::getInstance().handleValveSensor(timeUntilWatering, maxOnDuration,
-                                                     noSensorSignalUrl, ssid, password, waitState);
-}
-
 void sendWateringStatus(boolean status)
 {
     WaterController::getInstance().sendWateringStatus(status);
+}
+
+void WaterController::reset()
+{
+    if (instance)
+    {
+        delete instance;
+        instance = nullptr;
+    }
 }

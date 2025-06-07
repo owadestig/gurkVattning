@@ -10,9 +10,12 @@
 
 const char *ssid = "Eagle_389AD0";
 const char *password = "CiKbPq6b";
-const char *serverUrl = "https://gurkvattning.onrender.com/get_device_variables";
-const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_signal";
-const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
+// const char *serverUrl = "https://gurkvattning.onrender.com/get_device_variables";
+// const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_signal";
+// const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
+const char *serverUrl = "http://192.168.38.169:5001/get_device_variables";
+const char *noButtonSignalUrl = "http://192.168.38.169:5001/no_button_signal";
+const char *set_is_watering_rul = "http://192.168.38.169:5001/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
 const int pinMotor = 16; // Actually controls the valve
@@ -43,13 +46,13 @@ void setup()
     Serial.println("Failed to connect to WiFi in setup");
   }
 
-  // Initialize water valve controller
+  // Initialize water controller
   WaterController &valveController = WaterController::getInstance();
   valveController.initialize(pinMotor, pinInput, maxOnDuration);
   valveController.setNetworkConfig(ssid, password, set_is_watering_rul, noButtonSignalUrl);
 
   Serial.println("Setup complete");
-  valveController.resetValve(); // Your original resetLED call
+  valveController.resetValve();
 }
 
 void loop()
@@ -62,14 +65,15 @@ void loop()
     String payload = httpHandler.sendRequest(serverUrl);
     if (payload != "error")
     {
-      WaterController::getInstance().processResponse(payload); // Your original processResponse
+      Serial.println(payload);
+      WaterController::getInstance().processResponse(payload);
     }
     else
     {
       wifiManager.disconnectFromWiFi();
       delay(errorTimeout);
       wifiManager.connectToWiFi(ssid, password);
-      Serial.println("Error");
+      Serial.println("Payload Error");
     }
   }
   else

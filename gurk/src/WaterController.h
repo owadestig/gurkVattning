@@ -1,8 +1,13 @@
 #ifndef WATERVALVECONTROLLER_H
 #define WATERVALVECONTROLLER_H
 
+#ifdef TEST_ENVIRONMENT
+#include "../test/mock/ArduinoMock.h"
+#include "../.pio/libdeps/modwifi/ArduinoJson/src/ArduinoJson.h"
+#else
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#endif
 
 // Forward declarations
 class WiFiManager;
@@ -19,8 +24,6 @@ public:
     virtual void delay(unsigned long ms) = 0;
     virtual unsigned long millis() = 0;
 };
-
-// Real GPIO implementation
 class ArduinoGPIOWrapper : public IGPIOInterface
 {
 public:
@@ -65,15 +68,16 @@ private:
     bool ownsInterface;
 
     // Pin configurations
-    uint8_t valveControlPin;             // Controls valve (your pinLED)
-    uint8_t valveSensorPin;              // Senses valve position (your pinInput)
+    uint8_t valveControlPin;             // Controls valve
+    uint8_t valveSensorPin;              // Senses valve position
     unsigned long maxSensorWaitDuration; // How long to wait for sensor confirmation
 
     WaterController();
 
 public:
     static WaterController &getInstance();
-    static void setGPIOInterface(IGPIOInterface *interface); // For testing
+    static void setGPIOInterface(IGPIOInterface *interface);
+    static void reset();
 
     ~WaterController();
 
@@ -81,9 +85,8 @@ public:
     void setNetworkConfig(const char *ssid, const char *password,
                           const char *statusUrl, const char *noSensorSignalUrl);
 
-    // Main control methods (your original functions)
     void processResponse(const String &payload);
-    void resetValve(); // Your resetLED function
+    void resetValve();
     void handleValveSensor(int timeUntilWatering, int maxOnDuration,
                            const char *noSensorSignalUrl, const char *ssid,
                            const char *password, int waitState);

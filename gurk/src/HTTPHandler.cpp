@@ -4,7 +4,7 @@ HTTPHandler *HTTPHandler::instance = nullptr;
 
 HTTPHandler::HTTPHandler() : httpClient(nullptr), wifiClient(nullptr), ownsClients(true), lastStatus(HTTPStatus::SUCCESS)
 {
-    WiFiClientSecure *realWifiClient = new WiFiClientSecure();
+    WiFiClient *realWifiClient = new WiFiClient();
     wifiClient = new ESP8266WiFiClientWrapper(realWifiClient);
     httpClient = new ESP8266HTTPWrapper(realWifiClient);
 }
@@ -46,11 +46,10 @@ String HTTPHandler::sendRequest(const String &url)
 {
     if (!httpClient || !wifiClient)
     {
+        Serial.println("HTTP Debug: Client not initialized");
         lastStatus = HTTPStatus::CONNECTION_FAILED;
         return "error";
     }
-
-    wifiClient->setInsecure(); // Disable SSL certificate verification
 
     if (!httpClient->begin(url))
     {
@@ -67,14 +66,17 @@ String HTTPHandler::sendRequest(const String &url)
         {
             payload = httpClient->getString();
             lastStatus = HTTPStatus::SUCCESS;
+            Serial.println(payload);
         }
         else
         {
+            Serial.println(httpCode);
             lastStatus = HTTPStatus::INVALID_RESPONSE;
         }
     }
     else
     {
+        Serial.println(httpCode);
         lastStatus = HTTPStatus::REQUEST_FAILED;
     }
 
@@ -100,12 +102,10 @@ bool HTTPHandler::sendNoButtonSignal(const String &url)
 
 bool HTTPHandler::setIsWatering(const String &url, bool isWatering)
 {
-    // You might want to modify this to send POST data with the isWatering parameter
     String response = sendRequest(url);
     return response != "error" && lastStatus == HTTPStatus::SUCCESS;
 }
 
-// Keep the old function for backward compatibility
 String sendRequestToServer(const char *serverUrl)
 {
     return HTTPHandler::getInstance().sendRequest(String(serverUrl));
