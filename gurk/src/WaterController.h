@@ -57,10 +57,10 @@ struct WateringSchedule
     int sleepTime;              // how long to sleep between checks (milliseconds)
 };
 
-class WaterValveController
+class WaterController
 {
 private:
-    static WaterValveController *instance;
+    static WaterController *instance;
     IGPIOInterface *gpioInterface;
     bool ownsInterface;
 
@@ -69,13 +69,13 @@ private:
     uint8_t valveSensorPin;              // Senses valve position (your pinInput)
     unsigned long maxSensorWaitDuration; // How long to wait for sensor confirmation
 
-    WaterValveController();
+    WaterController();
 
 public:
-    static WaterValveController &getInstance();
+    static WaterController &getInstance();
     static void setGPIOInterface(IGPIOInterface *interface); // For testing
 
-    ~WaterValveController();
+    ~WaterController();
 
     void initialize(uint8_t controlPin, uint8_t sensorPin, unsigned long maxWaitDuration);
     void setNetworkConfig(const char *ssid, const char *password,

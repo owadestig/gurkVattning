@@ -1,4 +1,4 @@
-#include "WaterValveController.h"
+#include "WaterController.h"
 #include "WiFiManager.h"
 #include "HTTPHandler.h"
 #include "Utils.h"
@@ -7,9 +7,9 @@ extern const int pinLED;
 extern const int pinInput;
 extern const char *set_is_watering_rul;
 
-WaterValveController *WaterValveController::instance = nullptr;
+WaterController *WaterController::instance = nullptr;
 
-WaterValveController::WaterValveController()
+WaterController::WaterController()
     : gpioInterface(new ArduinoGPIOWrapper()), ownsInterface(true),
       valveControlPin(0), valveSensorPin(0), maxSensorWaitDuration(10000),
       wifiSSID(nullptr), wifiPassword(nullptr),
@@ -17,7 +17,7 @@ WaterValveController::WaterValveController()
 {
 }
 
-WaterValveController::~WaterValveController()
+WaterController::~WaterController()
 {
     if (ownsInterface && gpioInterface)
     {
@@ -25,16 +25,16 @@ WaterValveController::~WaterValveController()
     }
 }
 
-WaterValveController &WaterValveController::getInstance()
+WaterController &WaterController::getInstance()
 {
     if (instance == nullptr)
     {
-        instance = new WaterValveController();
+        instance = new WaterController();
     }
     return *instance;
 }
 
-void WaterValveController::setGPIOInterface(IGPIOInterface *interface)
+void WaterController::setGPIOInterface(IGPIOInterface *interface)
 {
     if (instance && instance->ownsInterface && instance->gpioInterface)
     {
@@ -47,7 +47,7 @@ void WaterValveController::setGPIOInterface(IGPIOInterface *interface)
     }
 }
 
-void WaterValveController::initialize(uint8_t controlPin, uint8_t sensorPin, unsigned long maxWaitDuration)
+void WaterController::initialize(uint8_t controlPin, uint8_t sensorPin, unsigned long maxWaitDuration)
 {
     valveControlPin = controlPin;
     valveSensorPin = sensorPin;
@@ -57,8 +57,8 @@ void WaterValveController::initialize(uint8_t controlPin, uint8_t sensorPin, uns
     gpioInterface->pinMode(valveSensorPin, INPUT_PULLUP);
 }
 
-void WaterValveController::setNetworkConfig(const char *ssid, const char *password,
-                                            const char *statusUrl, const char *noSensorUrl)
+void WaterController::setNetworkConfig(const char *ssid, const char *password,
+                                       const char *statusUrl, const char *noSensorUrl)
 {
     wifiSSID = ssid;
     wifiPassword = password;
@@ -66,7 +66,7 @@ void WaterValveController::setNetworkConfig(const char *ssid, const char *passwo
     noSensorSignalUrl = noSensorUrl;
 }
 
-void WaterValveController::sendWateringStatus(boolean status)
+void WaterController::sendWateringStatus(boolean status)
 {
     WiFiManager &wifiManager = WiFiManager::getInstance();
 
@@ -92,9 +92,9 @@ void WaterValveController::sendWateringStatus(boolean status)
     }
 }
 
-void WaterValveController::handleValveSensor(int timeUntilWatering, int maxOnDuration,
-                                             const char *noSensorSignalUrl, const char *ssid,
-                                             const char *password, int waitState)
+void WaterController::handleValveSensor(int timeUntilWatering, int maxOnDuration,
+                                        const char *noSensorSignalUrl, const char *ssid,
+                                        const char *password, int waitState)
 {
     // Turn on the valve
     gpioInterface->digitalWrite(valveControlPin, HIGH);
@@ -130,7 +130,7 @@ void WaterValveController::handleValveSensor(int timeUntilWatering, int maxOnDur
     }
 }
 
-void WaterValveController::processResponse(const String &payload)
+void WaterController::processResponse(const String &payload)
 {
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, payload);
@@ -180,7 +180,7 @@ void WaterValveController::processResponse(const String &payload)
     }
 }
 
-void WaterValveController::resetValve()
+void WaterController::resetValve()
 {
     gpioInterface->digitalWrite(valveControlPin, HIGH);
     gpioInterface->delay(5000);
@@ -201,7 +201,7 @@ void WaterValveController::resetValve()
     }
 }
 
-void WaterValveController::connectWiFi()
+void WaterController::connectWiFi()
 {
     if (wifiSSID && wifiPassword)
     {
@@ -210,7 +210,7 @@ void WaterValveController::connectWiFi()
     }
 }
 
-void WaterValveController::disconnectWiFi()
+void WaterController::disconnectWiFi()
 {
     WiFiManager &wifiManager = WiFiManager::getInstance();
     wifiManager.disconnectFromWiFi();
@@ -219,22 +219,22 @@ void WaterValveController::disconnectWiFi()
 // Keep the old functions for backward compatibility
 void resetLED()
 {
-    WaterValveController::getInstance().resetValve();
+    WaterController::getInstance().resetValve();
 }
 
 void processResponse(const String &payload)
 {
-    WaterValveController::getInstance().processResponse(payload);
+    WaterController::getInstance().processResponse(payload);
 }
 
 void handleLED(int timeUntilWatering, int maxOnDuration, const char *noSensorSignalUrl,
                const char *ssid, const char *password, int waitState)
 {
-    WaterValveController::getInstance().handleValveSensor(timeUntilWatering, maxOnDuration,
-                                                          noSensorSignalUrl, ssid, password, waitState);
+    WaterController::getInstance().handleValveSensor(timeUntilWatering, maxOnDuration,
+                                                     noSensorSignalUrl, ssid, password, waitState);
 }
 
 void sendWateringStatus(boolean status)
 {
-    WaterValveController::getInstance().sendWateringStatus(status);
+    WaterController::getInstance().sendWateringStatus(status);
 }

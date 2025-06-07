@@ -5,7 +5,7 @@
 #include <ESP8266HTTPClient.h>
 #include "WiFiManager.h"
 #include "HTTPHandler.h"
-#include "WaterValveController.h" // Updated include
+#include "WaterController.h" // Updated include
 #include "Config.h"
 
 const char *ssid = "Eagle_389AD0";
@@ -44,7 +44,7 @@ void setup()
   }
 
   // Initialize water valve controller
-  WaterValveController &valveController = WaterValveController::getInstance();
+  WaterController &valveController = WaterController::getInstance();
   valveController.initialize(pinLED, pinInput, maxOnDuration);
   valveController.setNetworkConfig(ssid, password, set_is_watering_rul, noButtonSignalUrl);
 
@@ -62,7 +62,7 @@ void loop()
     String payload = httpHandler.sendRequest(serverUrl);
     if (payload != "error")
     {
-      WaterValveController::getInstance().processResponse(payload); // Your original processResponse
+      WaterController::getInstance().processResponse(payload); // Your original processResponse
     }
     else
     {

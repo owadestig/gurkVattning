@@ -32,11 +32,11 @@ public:
 // Include mock interface
 #include "mock/MockWaterController.h"
 
-// Simplified WaterValveController for testing
-class WaterValveController
+// Simplified WaterController for testing
+class WaterController
 {
 private:
-    static WaterValveController *instance;
+    static WaterController *instance;
     IGPIOInterface *gpioInterface;
     bool ownsInterface;
 
@@ -44,22 +44,22 @@ private:
     uint8_t valveSensorPin;
     unsigned long maxSensorWaitDuration;
 
-    WaterValveController() : gpioInterface(nullptr), ownsInterface(false),
-                             valveControlPin(0), valveSensorPin(0), maxSensorWaitDuration(10000) {}
+    WaterController() : gpioInterface(nullptr), ownsInterface(false),
+                        valveControlPin(0), valveSensorPin(0), maxSensorWaitDuration(10000) {}
 
 public:
-    static WaterValveController &getInstance()
+    static WaterController &getInstance()
     {
         if (instance == nullptr)
         {
-            instance = new WaterValveController();
+            instance = new WaterController();
         }
         return *instance;
     }
 
     static void setGPIOInterface(IGPIOInterface *interface)
     {
-        WaterValveController &controller = getInstance();
+        WaterController &controller = getInstance();
         if (controller.ownsInterface && controller.gpioInterface)
         {
             delete controller.gpioInterface;
@@ -149,19 +149,19 @@ public:
     }
 };
 
-WaterValveController *WaterValveController::instance = nullptr;
+WaterController *WaterController::instance = nullptr;
 
 // Test functions
 void test_valve_sensor_success()
 {
     std::cout << "=== Testing valve sensor detection success ===" << std::endl;
 
-    WaterValveController::reset();
+    WaterController::reset();
     setMockMillis(0);
 
     MockGPIOInterface *mockGPIO = new MockGPIOInterface();
-    WaterValveController::setGPIOInterface(mockGPIO);
-    WaterValveController &controller = WaterValveController::getInstance();
+    WaterController::setGPIOInterface(mockGPIO);
+    WaterController &controller = WaterController::getInstance();
 
     controller.initialize(5, 14, 5000); // valve control pin 5, sensor pin 14
     mockGPIO->clearOperations();
@@ -184,12 +184,12 @@ void test_valve_sensor_timeout()
 {
     std::cout << "=== Testing valve sensor timeout ===" << std::endl;
 
-    WaterValveController::reset();
+    WaterController::reset();
     setMockMillis(0);
 
     MockGPIOInterface *mockGPIO = new MockGPIOInterface();
-    WaterValveController::setGPIOInterface(mockGPIO);
-    WaterValveController &controller = WaterValveController::getInstance();
+    WaterController::setGPIOInterface(mockGPIO);
+    WaterController &controller = WaterController::getInstance();
 
     controller.initialize(5, 14, 1000); // Short timeout for testing
     mockGPIO->clearOperations();
@@ -212,12 +212,12 @@ void test_reset_valve_sequence()
 {
     std::cout << "=== Testing reset valve sequence ===" << std::endl;
 
-    WaterValveController::reset();
+    WaterController::reset();
     setMockMillis(0);
 
     MockGPIOInterface *mockGPIO = new MockGPIOInterface();
-    WaterValveController::setGPIOInterface(mockGPIO);
-    WaterValveController &controller = WaterValveController::getInstance();
+    WaterController::setGPIOInterface(mockGPIO);
+    WaterController &controller = WaterController::getInstance();
 
     controller.initialize(5, 14, 5000);
     mockGPIO->clearOperations();
@@ -254,12 +254,12 @@ void test_valve_initialization()
 {
     std::cout << "=== Testing valve controller initialization ===" << std::endl;
 
-    WaterValveController::reset();
+    WaterController::reset();
     setMockMillis(0);
 
     MockGPIOInterface *mockGPIO = new MockGPIOInterface();
-    WaterValveController::setGPIOInterface(mockGPIO);
-    WaterValveController &controller = WaterValveController::getInstance();
+    WaterController::setGPIOInterface(mockGPIO);
+    WaterController &controller = WaterController::getInstance();
 
     controller.initialize(5, 14, 10000);
 
@@ -275,12 +275,12 @@ void test_reset_valve_simple_case()
 {
     std::cout << "=== Testing reset valve simple case ===" << std::endl;
 
-    WaterValveController::reset();
+    WaterController::reset();
     setMockMillis(0);
 
     MockGPIOInterface *mockGPIO = new MockGPIOInterface();
-    WaterValveController::setGPIOInterface(mockGPIO);
-    WaterValveController &controller = WaterValveController::getInstance();
+    WaterController::setGPIOInterface(mockGPIO);
+    WaterController &controller = WaterController::getInstance();
 
     controller.initialize(5, 14, 5000);
     mockGPIO->clearOperations();
@@ -305,7 +305,7 @@ void test_reset_valve_simple_case()
 
 int main()
 {
-    std::cout << "Running WaterValveController Tests..." << std::endl
+    std::cout << "Running WaterController Tests..." << std::endl
               << std::endl;
 
     try

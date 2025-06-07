@@ -11,7 +11,6 @@ enum class WiFiStatus
     FAILED
 };
 
-// Abstract interface for WiFi operations (for mocking)
 class IWiFiInterface
 {
 public:
