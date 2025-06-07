@@ -15,8 +15,8 @@ const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_sig
 const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
-const int pinLED = 5;    // Actually controls the valve
-const int pinInput = 14; // Actually reads valve position sensor
+const int pinMotor = 16; // Actually controls the valve
+const int pinInput = 2;  // Actually reads valve position sensor
 const unsigned long maxOnDuration = 10000;
 const int errorTimeout = 20000; // 20 sekunder
 
@@ -45,7 +45,7 @@ void setup()
 
   // Initialize water valve controller
   WaterController &valveController = WaterController::getInstance();
-  valveController.initialize(pinLED, pinInput, maxOnDuration);
+  valveController.initialize(pinMotor, pinInput, maxOnDuration);
   valveController.setNetworkConfig(ssid, password, set_is_watering_rul, noButtonSignalUrl);
 
   Serial.println("Setup complete");
