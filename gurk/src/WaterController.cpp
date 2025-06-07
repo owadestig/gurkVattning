@@ -102,7 +102,8 @@ void WaterController::handleValveSensor(int timeUntilWatering, int maxOnDuration
     unsigned long startTime = gpioInterface->millis();
     bool sensorSignal = false;
 
-    while (gpioInterface->millis() - startTime < maxOnDuration)
+    // Fix: Cast maxOnDuration to unsigned long to avoid signed/unsigned comparison warning
+    while (gpioInterface->millis() - startTime < (unsigned long)maxOnDuration)
     {
         // Read the sensor state directly without debouncing
         int sensorState = gpioInterface->digitalRead(valveSensorPin);
@@ -142,8 +143,8 @@ void WaterController::processResponse(const String &payload)
     }
 
     int timeUntilWatering = 1000 * int(doc["time_until_watering"]);
-    unsigned long wateringTime = doc["watering_time"] * 1000 * 60; // Access the value as an integer
-    int sleepTime = doc["sleep_time"] * 1000;
+    unsigned long wateringTime = doc["watering_time"].as<int>() * 1000UL * 60UL;
+    int sleepTime = doc["sleep_time"].as<int>() * 1000;
 
     Serial.print("time_until_watering after JSON parsing = ");
     Serial.println(timeUntilWatering);

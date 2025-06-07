@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h>
 #include "../lib/ESP8266Ping-master/src/ESP8266Ping.h"
 #include <WiFiClientSecure.h>
-#include "../lib/ArduinoJson-v6.21.5.h"
+#include "ArduinoJson.h"
 #include <ESP8266HTTPClient.h>
 #include "WiFiManager.h"
 #include "HTTPHandler.h"
@@ -78,5 +78,5 @@ void loop()
     delay(errorTimeout);
     wifiManager.connectToWiFi(ssid, password);
   }
-  delay(1000); // Add a delay to reduce the serial output frequency
+  delay(1000);
 }
