@@ -55,9 +55,9 @@ public:
 
 struct WateringSchedule
 {
-    int timeUntilWatering;      // milliseconds until watering should start
-    unsigned long wateringTime; // how long to water (milliseconds)
-    int sleepTime;              // how long to sleep between checks (milliseconds)
+    int timeUntilWatering;         // milliseconds until watering should start
+    unsigned long valveOnDuration; // how long to water (milliseconds)
+    int sleepTime;                 // how long to sleep between checks (milliseconds)
 };
 
 class WaterController
@@ -87,10 +87,13 @@ public:
 
     void processResponse(const String &payload);
     void resetValve();
-    void handleValveSensor(int timeUntilWatering, int maxOnDuration,
+    void handleValveSensor(int maxOnDuration,
                            const char *noSensorSignalUrl, const char *ssid,
                            const char *password, int waitState);
 
+    void WaterController::waterLoop(unsigned long valveOnDuration,
+                                    int maxSensorWaitDuration, const char *noSensorSignalUrl,
+                                    const char *wifiSSID, const char *wifiPassword);
     // Network operations
     void sendWateringStatus(boolean status);
 

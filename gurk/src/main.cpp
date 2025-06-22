@@ -8,14 +8,16 @@
 #include "WaterController.h" // Updated include
 #include "Config.h"
 
-const char *ssid = "Eagle_389AD0";
-const char *password = "CiKbPq6b";
+// const char *ssid = "Eagle_389AD0";
+// const char *password = "CiKbPq6b";
+const char *ssid = "comhem_E70F39";
+const char *password = "A77F37F374";
 // const char *serverUrl = "https://gurkvattning.onrender.com/get_device_variables";
 // const char *noButtonSignalUrl = "https://gurkvattning.onrender.com/no_button_signal";
 // const char *set_is_watering_rul = "https://gurkvattning.onrender.com/set_is_watering";
-const char *serverUrl = "http://192.168.38.169:5001/get_device_variables";
-const char *noButtonSignalUrl = "http://192.168.38.169:5001/no_button_signal";
-const char *set_is_watering_rul = "http://192.168.38.169:5001/set_is_watering";
+const char *serverUrl = "http://192.168.1.136:5001/get_device_variables";
+const char *noButtonSignalUrl = "http://192.168.1.136:5001/no_button_signal";
+const char *set_is_watering_rul = "http://192.168.1.136:5001/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
 const int pinMotor = 16; // Actually controls the valve

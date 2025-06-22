@@ -53,12 +53,12 @@ void test_json_processing_real_response()
 
     // Test accessing fields like your code does
     int timeUntilWatering = largeDoc["time_until_watering"].as<int>();
-    unsigned long wateringTime = largeDoc["watering_time"].as<int>() * 1000UL * 60UL;
+    unsigned long valveOnDuration = largeDoc["watering_time"].as<int>() * 1000UL * 60UL;
     int sleepTime = largeDoc["sleep_time"].as<int>() * 1000;
 
     std::cout << "Parsed values:" << std::endl;
     std::cout << "  time_until_watering: " << timeUntilWatering << std::endl;
-    std::cout << "  watering_time (ms): " << wateringTime << std::endl;
+    std::cout << "  watering_time (ms): " << valveOnDuration << std::endl;
     std::cout << "  sleep_time (ms): " << sleepTime << std::endl;
 
     // Verify values are correct

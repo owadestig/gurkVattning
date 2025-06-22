@@ -90,7 +90,7 @@ void WaterController::sendWateringStatus(boolean status)
     }
 }
 
-void WaterController::handleValveSensor(int timeUntilWatering, int maxOnDuration,
+void WaterController::handleValveSensor(int maxOnDuration,
                                         const char *noSensorSignalUrl, const char *ssid,
                                         const char *password, int waitState)
 {
@@ -138,13 +138,13 @@ void WaterController::processResponse(const String &payload)
     }
 
     int timeUntilWatering = 1000 * int(doc["time_until_watering"]);
-    unsigned long wateringTime = doc["watering_time"].as<int>() * 1000UL * 60UL;
+    unsigned long valveOnDuration = doc["valve_on_duration_minutes"].as<int>() * 1000UL * 60UL;
     int sleepTime = doc["sleep_time"].as<int>() * 1000;
 
     Serial.print("time_until_watering after JSON parsing = ");
     Serial.println(timeUntilWatering);
     Serial.print("Valve On Duration = ");
-    Serial.println(wateringTime);
+    Serial.println(valveOnDuration);
     Serial.print("Sleep Time = ");
     Serial.println(sleepTime);
 
@@ -156,18 +156,26 @@ void WaterController::processResponse(const String &payload)
             Serial.printf("Sleeping for %d ms before doing a cycle\n", timeUntilWatering);
             gpioInterface->delay(timeUntilWatering);
         }
-
-        handleValveSensor(timeUntilWatering, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, LOW);
-        sendWateringStatus(true);
-        gpioInterface->delay(wateringTime);
-        handleValveSensor(timeUntilWatering, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
-        sendWateringStatus(false);
+        waterLoop(valveOnDuration,
+                  maxSensorWaitDuration, noSensorSignalUrl,
+                  wifiSSID, wifiPassword);
     }
     else
     { // om mer än wait threshhold, sov o kolla igen om sleep_time tid
         Serial.printf("Sleeping for %d ms\n", sleepTime);
         gpioInterface->delay(sleepTime); // Sleep for the threshold time
     }
+}
+
+void WaterController::waterLoop(unsigned long valveOnDuration,
+                                int maxSensorWaitDuration, const char *noSensorSignalUrl,
+                                const char *wifiSSID, const char *wifiPassword)
+{
+    handleValveSensor(maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, LOW);
+    sendWateringStatus(true);
+    gpioInterface->delay(valveOnDuration);
+    handleValveSensor(maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
+    sendWateringStatus(false);
 }
 
 void WaterController::resetValve()
@@ -178,15 +186,15 @@ void WaterController::resetValve()
 
     if (gpioInterface->digitalRead(valveSensorPin) == HIGH)
     {
-        handleValveSensor(0, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
+        handleValveSensor(maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
     }
 
     if (gpioInterface->digitalRead(valveSensorPin) == LOW)
     {
-        handleValveSensor(0, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
+        handleValveSensor(maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, HIGH);
         if (gpioInterface->digitalRead(valveSensorPin) == HIGH)
         {
-            handleValveSensor(0, maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, LOW);
+            handleValveSensor(maxSensorWaitDuration, noSensorSignalUrl, wifiSSID, wifiPassword, LOW);
         }
     }
 }
