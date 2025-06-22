@@ -32,11 +32,34 @@ void handleValveSensor(int maxOnDuration, int waitState)
     digitalWrite(WATER_PIN, LOW);
 }
 
+void resetValve(int maxSensorWaitDuration)
+{
+    digitalWrite(WATER_PIN, HIGH);
+    delay(5000);
+    digitalWrite(WATER_PIN, LOW);
+
+    if (digitalRead(SENSOR_PIN) == HIGH)
+    {
+        handleValveSensor(maxSensorWaitDuration, HIGH);
+    }
+
+    if (digitalRead(SENSOR_PIN) == LOW)
+    {
+        handleValveSensor(maxSensorWaitDuration, HIGH);
+        if (digitalRead(SENSOR_PIN) == HIGH)
+        {
+            handleValveSensor(maxSensorWaitDuration, LOW);
+        }
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
     delay(1000);
-
+    pinMode(WATER_PIN, OUTPUT);
+    pinMode(SENSOR_PIN, INPUT_PULLUP);
+    resetValve(10000);
     Serial.println("\nEnkel testfil");
 }
 
