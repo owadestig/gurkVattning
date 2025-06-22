@@ -19,7 +19,7 @@ const char *set_is_watering_rul = "http://192.168.38.169:5001/set_is_watering";
 
 // Define variables to hold the constants fetched from the server
 const int pinMotor = 16; // Actually controls the valve
-const int pinInput = 2;  // Actually reads valve position sensor
+const int pinInput = 5;  // Actually reads valve position sensor
 const unsigned long maxOnDuration = 10000;
 const int errorTimeout = 20000; // 20 sekunder
 
